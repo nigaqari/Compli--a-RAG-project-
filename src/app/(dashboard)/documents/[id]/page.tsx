@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { buttonVariants } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { PDFViewer } from "@/components/shared/pdf-viewer"
 import Link from "next/link"
 
 export default function DocumentViewerPage({ params }: { params: { id: string } }) {
@@ -24,10 +25,7 @@ export default function DocumentViewerPage({ params }: { params: { id: string } 
             <CardTitle className="text-sm">Preview</CardTitle>
           </CardHeader>
           <CardContent className="p-0 flex-1 overflow-hidden">
-            <ScrollArea className="h-full p-6 text-sm leading-relaxed text-muted-foreground">
-              [Mock PDF content would be rendered here]
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua...
-            </ScrollArea>
+            <PDFViewer url={`http://localhost:8000/api/v1/documents/${params.id}/download`} />
           </CardContent>
         </Card>
         
