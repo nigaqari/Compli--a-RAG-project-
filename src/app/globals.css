@@ -1,0 +1,135 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* Brand */
+  --color-brand-red: var(--brand-red);
+  --color-brand-red-hover: var(--brand-red-hover);
+  --color-red-subtle: var(--red-subtle);
+
+  /* Semantic */
+  --color-risk-high: var(--risk-high);
+  --color-risk-medium: var(--risk-medium);
+  --color-risk-low: var(--risk-low);
+  --color-success: var(--risk-low);
+  --color-warning: var(--risk-medium);
+
+  /* Surfaces */
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-background: var(--background);
+
+  /* Shadcn mappings */
+  --color-foreground: var(--text-primary);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--text-primary);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--text-primary);
+  --color-primary: var(--brand-red);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--surface-hover);
+  --color-secondary-foreground: var(--text-primary);
+  --color-muted: var(--surface-hover);
+  --color-muted-foreground: var(--text-secondary);
+  --color-accent: var(--red-subtle);
+  --color-accent-foreground: var(--brand-red);
+  --color-destructive: var(--brand-red);
+  --color-border: var(--border);
+  --color-input: var(--border);
+  --color-ring: var(--brand-red);
+
+  /* Sidebar */
+  --color-sidebar: var(--sidebar-bg);
+  --color-sidebar-foreground: var(--sidebar-text);
+  --color-sidebar-primary: var(--brand-red);
+  --color-sidebar-primary-foreground: #ffffff;
+  --color-sidebar-accent: var(--surface-hover);
+  --color-sidebar-accent-foreground: var(--text-primary);
+  --color-sidebar-border: var(--sidebar-border-color);
+  --color-sidebar-ring: var(--brand-red);
+
+  /* Radius */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* ─── Light Mode ─────────────────────────────────────────── */
+:root {
+  --background:     #f5f5f5;
+  --surface:        #ffffff;
+  --surface-hover:  #f0f0f0;
+  --border:         #e5e5e5;
+  --text-primary:   #0a0a0a;
+  --text-secondary: #6b6b6b;
+
+  --brand-red:      #d41200;
+  --brand-red-hover:#b30f00;
+  --red-subtle:     #fff0ef;
+
+  --risk-high:      #d41200;
+  --risk-medium:    #c26a00;
+  --risk-low:       #1f7a4d;
+
+  /* Light mode sidebar — matches the page, not inverted */
+  --sidebar-bg:          #ffffff;
+  --sidebar-text:        #6b6b6b;
+  --sidebar-text-active: #0a0a0a;
+  --sidebar-border-color: #e5e5e5;
+  --sidebar-item-hover:  #f5f5f5;
+  --sidebar-item-active: #fff0ef;
+
+  --radius: 0.5rem;
+}
+
+/* ─── Dark Mode ──────────────────────────────────────────── */
+.dark {
+  --background:     #0a0a0a;
+  --surface:        #141414;
+  --surface-hover:  #1f1f1f;
+  --border:         #2a2a2a;
+  --text-primary:   #ffffff;
+  --text-secondary: #a3a3a3;
+
+  --brand-red:      #e5140a;
+  --brand-red-hover:#cc1009;
+  --red-subtle:     #2a0e0c;
+
+  --risk-high:      #e5140a;
+  --risk-medium:    #e08a1e;
+  --risk-low:       #2fa966;
+
+  /* Dark mode sidebar — stays true black */
+  --sidebar-bg:          #0a0a0a;
+  --sidebar-text:        #a3a3a3;
+  --sidebar-text-active: #ffffff;
+  --sidebar-border-color: #2a2a2a;
+  --sidebar-item-hover:  #1f1f1f;
+  --sidebar-item-active: #2a0e0c;
+}
+
+/* ─── Base ───────────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    background-color: var(--background);
+    color: var(--text-primary);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  html {
+    font-family: var(--font-sans), system-ui, sans-serif;
+  }
+  h1 { font-size: 2.5rem; font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; }
+  h2 { font-size: 1.5rem; font-weight: 600; line-height: 1.3; }
+  h3 { font-size: 1.125rem; font-weight: 600; line-height: 1.4; }
+}
