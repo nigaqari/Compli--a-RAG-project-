@@ -1,6 +1,6 @@
 "use client"
 
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Search, Bell } from "lucide-react"
 import { ThemeToggle } from "./theme-toggle"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
@@ -25,6 +25,7 @@ const routeMap: Record<string, string> = {
 
 export function Topbar() {
   const pathname = usePathname()
+  const router = useRouter()
   const segments = pathname.split('/').filter(Boolean)
 
   return (
@@ -80,7 +81,7 @@ export function Topbar() {
 
         {/* Notifications */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="relative h-9 w-9 inline-flex items-center justify-center rounded-lg transition-colors hover:bg-[var(--surface-hover)]">
+          <DropdownMenuTrigger className="relative h-9 w-9 inline-flex items-center justify-center rounded-lg transition-colors hover:bg-[var(--surface-hover)] cursor-pointer outline-none">
             <Bell className="h-[1.1rem] w-[1.1rem]" style={{ color: 'var(--text-secondary)' }} />
             <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center rounded-full p-0 text-[10px] text-white" style={{ backgroundColor: 'var(--brand-red)' }}>
               3
@@ -96,7 +97,7 @@ export function Topbar() {
 
         {/* Profile */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="rounded-full inline-flex items-center justify-center hover:ring-2 hover:ring-[var(--brand-red)] transition-all">
+          <DropdownMenuTrigger className="rounded-full inline-flex items-center justify-center hover:ring-2 hover:ring-[var(--brand-red)] transition-all cursor-pointer outline-none">
             <Avatar className="h-8 w-8">
               <AvatarFallback className="text-xs font-semibold text-white" style={{ backgroundColor: 'var(--brand-red)' }}>JD</AvatarFallback>
             </Avatar>
@@ -112,7 +113,11 @@ export function Topbar() {
             <DropdownMenuItem style={{ color: 'var(--text-secondary)' }}>Profile</DropdownMenuItem>
             <DropdownMenuItem style={{ color: 'var(--text-secondary)' }}>Settings</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem style={{ color: 'var(--brand-red)' }}>
+            <DropdownMenuItem 
+              style={{ color: 'var(--brand-red)' }}
+              className="cursor-pointer"
+              onClick={() => router.push('/login')}
+            >
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
