@@ -182,7 +182,7 @@ export default function AnalysisPage({ params }: { params: { id: string } }) {
               <Card key={risk.id} className={risk.severity === "high" ? "border-[var(--risk-high)]/50" : ""}>
                 <CardHeader className={`${risk.severity === "high" ? "bg-[var(--risk-high)]/5" : "bg-surface-alt/50"} flex flex-row items-center justify-between pb-4 border-b`}>
                   <CardTitle className="text-base font-semibold">{risk.title}</CardTitle>
-                  <RiskBadge level={risk.severity.charAt(0).toUpperCase() + risk.severity.slice(1)} />
+                  <RiskBadge level={risk.severity.charAt(0).toUpperCase() + risk.severity.slice(1) as 'High' | 'Medium' | 'Low'} />
                 </CardHeader>
                 <CardContent className="pt-4">
                   <p className="text-sm text-muted-foreground mb-4">{risk.rationale}</p>

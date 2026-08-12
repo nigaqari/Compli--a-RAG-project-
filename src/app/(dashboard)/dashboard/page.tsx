@@ -119,7 +119,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      {a.top_risk_severity && <RiskBadge level={a.top_risk_severity.charAt(0).toUpperCase() + a.top_risk_severity.slice(1)} />}
+                      {a.top_risk_severity && <RiskBadge level={a.top_risk_severity.charAt(0).toUpperCase() + a.top_risk_severity.slice(1) as 'High' | 'Medium' | 'Low'} />}
                       <Link href={`/analysis/${a.document_id}`} className="text-sm text-[var(--brand-red)] hover:underline font-medium">
                         View
                       </Link>

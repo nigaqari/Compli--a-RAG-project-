@@ -5,7 +5,7 @@ const API_URL = "http://localhost:8000/api/v1/chat"
 export interface Citation {
   document_id: string
   document_name: string
-  page_number: int
+  page_number: number
   excerpt_snippet: string
 }
 

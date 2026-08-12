@@ -4,7 +4,7 @@ export interface PolicyRequirement {
   requirement_text: string
   mandatory: boolean
   source_chunk_id?: string
-  page_number?: int
+  page_number?: number
 }
 
 export interface PolicyVersion {

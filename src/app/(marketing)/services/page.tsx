@@ -191,7 +191,7 @@ export default function ServicesPage() {
           transition={{ duration: 0.6 }}
         >
           <h2 className="text-3xl font-bold mb-12 text-center">Frequently Asked Questions</h2>
-          <Accordion type="single" collapsible className="w-full">
+          <Accordion className="w-full">
             <AccordionItem value="item-1">
               <AccordionTrigger className="text-left text-lg">Where does my document data go?</AccordionTrigger>
               <AccordionContent className="text-muted-foreground text-base">

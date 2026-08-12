@@ -158,7 +158,7 @@ export default function UploadPage() {
           <div className="space-y-4 pt-2">
             <div>
               <label className="text-sm font-medium mb-1.5 block">Document Type</label>
-              <Select value={docType} onValueChange={setDocType} disabled={status !== "idle"}>
+              <Select value={docType} onValueChange={(v) => setDocType(v ?? 'contract')} disabled={status !== "idle"}>
                 <SelectTrigger className="w-[300px]">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
