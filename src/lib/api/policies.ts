@@ -1,3 +1,5 @@
+const API_BASE = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
+
 export interface PolicyRequirement {
   id: string
   category: string
@@ -30,12 +32,12 @@ export interface Policy {
 
 export const policiesApi = {
   getPolicies: async (): Promise<Policy[]> => {
-    const res = await fetch('/api/v1/policies')
+    const res = await fetch(`${API_BASE}/api/v1/policies`)
     if (!res.ok) throw new Error('Failed to fetch policies')
     return res.json()
   },
   getPolicyVersions: async (policyId: string): Promise<PolicyVersion[]> => {
-    const res = await fetch(`/api/v1/policies/${policyId}/versions`)
+    const res = await fetch(`${API_BASE}/api/v1/policies/${policyId}/versions`)
     if (!res.ok) throw new Error('Failed to fetch versions')
     return res.json()
   },
@@ -43,7 +45,7 @@ export const policiesApi = {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('change_note', changeNote)
-    const res = await fetch(`/api/v1/policies/${policyId}/versions`, {
+    const res = await fetch(`${API_BASE}/api/v1/policies/${policyId}/versions`, {
       method: 'POST',
       body: formData
     })

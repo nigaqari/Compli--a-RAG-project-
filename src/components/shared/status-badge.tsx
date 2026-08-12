@@ -1,19 +1,26 @@
-import type { DocumentStatus } from "@/lib/mock-data/documents"
+import React from "react"
+import { Badge } from "@/components/ui/badge"
 
-const CONFIG: Record<DocumentStatus, { bg: string; text: string; border: string }> = {
-  Analyzed: { bg: "transparent", text: "var(--risk-low)",    border: "var(--risk-low)" },
-  Pending:  { bg: "transparent", text: "var(--risk-medium)", border: "var(--risk-medium)" },
-  Flagged:  { bg: "transparent", text: "var(--risk-high)",   border: "var(--risk-high)" },
+export type DocumentStatus = "Analyzed" | "Pending" | "Flagged" | "uploaded" | "processing" | "completed" | "failed" | string
+
+const CONFIG: Record<string, { className: string; label: string }> = {
+  Analyzed:   { className: "border-[var(--success)] text-[var(--success)]", label: "Analyzed" },
+  completed:  { className: "border-[var(--success)] text-[var(--success)]", label: "Completed" },
+  Pending:    { className: "border-amber-500 text-amber-500", label: "Pending" },
+  uploaded:   { className: "border-blue-500 text-blue-500", label: "Uploaded" },
+  processing: { className: "border-amber-500 text-amber-500", label: "Processing" },
+  Flagged:    { className: "border-[var(--risk-high)] text-[var(--risk-high)]", label: "Flagged" },
+  failed:     { className: "border-[var(--risk-high)] text-[var(--risk-high)]", label: "Failed" },
 }
 
 export function StatusBadge({ status }: { status: DocumentStatus }) {
-  const { bg, text, border } = CONFIG[status]
+  const config = CONFIG[status] || { className: "border-muted-foreground text-muted-foreground", label: status }
   return (
-    <span
-      className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
-      style={{ backgroundColor: bg, color: text, borderColor: border }}
+    <Badge
+      variant="outline"
+      className={`capitalize font-medium text-xs ${config.className}`}
     >
-      {status}
-    </span>
+      {config.label}
+    </Badge>
   )
 }

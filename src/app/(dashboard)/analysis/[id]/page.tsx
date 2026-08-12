@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, use } from "react"
 import { PageHeader } from "@/components/shared/page-header"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,21 +9,32 @@ import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { analysisApi, AnalysisOut, AnalysisStatus } from "@/lib/api/analysis"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, Loader2 } from "lucide-react"
+import { AlertCircle, Loader2, FolderOpen, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
-export default function AnalysisPage({ params }: { params: { id: string } }) {
+export default function AnalysisPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params)
+  const id = resolvedParams.id
+
   const [status, setStatus] = useState<AnalysisStatus | null>(null)
   const [analysis, setAnalysis] = useState<AnalysisOut | null>(null)
   const [loading, setLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  const isPlaceholder = !id || id === "placeholder"
 
   const fetchStatus = async () => {
+    if (isPlaceholder) {
+      setLoading(false)
+      return
+    }
+
     try {
-      const currentStatus = await analysisApi.getAnalysisStatus(params.id)
+      const currentStatus = await analysisApi.getAnalysisStatus(id)
       setStatus(currentStatus)
 
       if (currentStatus.status === "completed") {
-        const data = await analysisApi.getLatestAnalysis(params.id)
+        const data = await analysisApi.getLatestAnalysis(id)
         setAnalysis(data)
         setLoading(false)
       } else if (currentStatus.status === "failed") {
@@ -34,25 +45,45 @@ export default function AnalysisPage({ params }: { params: { id: string } }) {
         // none
         setLoading(false)
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e)
+      setErrorMessage(e.response?.data?.detail || e.message || "Failed to load document analysis")
       setLoading(false)
     }
   }
 
   useEffect(() => {
     fetchStatus()
-  }, [params.id])
+  }, [id])
 
   const handleRunAnalysis = async () => {
+    if (isPlaceholder) return
     setLoading(true)
+    setErrorMessage(null)
     try {
-      await analysisApi.triggerAnalysis(params.id)
+      await analysisApi.triggerAnalysis(id)
       setTimeout(fetchStatus, 1000)
-    } catch (e) {
+    } catch (e: any) {
       console.error(e)
+      const msg = e.response?.data?.detail || e.message || "Failed to trigger analysis"
+      setErrorMessage(msg)
       setLoading(false)
     }
+  }
+
+  if (isPlaceholder) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[50vh] text-center p-8 border border-dashed rounded-xl">
+        <FolderOpen className="h-12 w-12 text-muted-foreground opacity-40 mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Select a Document to Analyze</h2>
+        <p className="text-muted-foreground mb-6 max-w-md">
+          Please select a contract or document from your Document Library to view or run AI analysis.
+        </p>
+        <Link href="/documents" className={buttonVariants({ variant: "default" })}>
+          Go to Document Library
+        </Link>
+      </div>
+    )
   }
 
   if (loading && (!status || status.status === "analyzing" || status.status === "pending")) {
@@ -65,11 +96,34 @@ export default function AnalysisPage({ params }: { params: { id: string } }) {
     )
   }
 
+  if (errorMessage && !analysis) {
+    return (
+      <div className="p-6">
+        <Link href="/documents" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+          <ArrowLeft className="h-4 w-4" /> Back to Document Library
+        </Link>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription className="mt-2 flex flex-col items-start gap-4">
+            <p>{errorMessage}</p>
+            <Link href="/documents" className={buttonVariants({ variant: "outline", size: "sm" })}>
+              Select Another Document
+            </Link>
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
+
   if (status?.status === "none" || !status) {
     return (
       <div className="flex flex-col items-center justify-center h-[50vh]">
         <h2 className="text-xl font-semibold mb-4">No Analysis Found</h2>
         <p className="text-muted-foreground mb-6">This document has not been analyzed yet.</p>
+        {errorMessage && (
+          <p className="text-sm text-destructive mb-4">{errorMessage}</p>
+        )}
         <Button onClick={handleRunAnalysis}>Run AI Analysis</Button>
       </div>
     )

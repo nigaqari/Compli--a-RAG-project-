@@ -49,6 +49,14 @@ export function PDFViewer({ url }: PDFViewerProps) {
     }
   }
 
+  if (!url || url.includes("undefined")) {
+    return (
+      <div className="flex flex-col h-full items-center justify-center p-8 text-muted-foreground">
+        No document file available for preview.
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col h-full items-center bg-gray-50/50">
       <div className="flex items-center justify-between w-full p-2 border-b bg-background sticky top-0 z-10">

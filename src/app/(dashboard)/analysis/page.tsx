@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from "react"
 import { PageHeader } from "@/components/shared/page-header"
-import { buttonVariants } from "@/components/ui/button"
-import Link from "next/link"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { StatusBadge } from "@/components/shared/status-badge"
-import { documentsApi, DocumentItem } from "@/lib/api/documents"
-import { Loader2, FolderOpen, Upload, FileText } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { Loader2, FileText, Sparkles, FolderOpen, ArrowRight } from "lucide-react"
+import { documentsApi, DocumentItem } from "@/lib/api/documents"
+import Link from "next/link"
 
-export default function DocumentLibraryPage() {
+export default function DocumentAnalysisIndexPage() {
   const [documents, setDocuments] = useState<DocumentItem[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -30,17 +30,11 @@ export default function DocumentLibraryPage() {
 
   return (
     <div>
-      <PageHeader 
-        title="Document Library" 
-        description="Manage, view, and analyze all your contracts and uploaded documents."
-        action={
-          <Link href="/upload" className={buttonVariants({ variant: "default" })}>
-            <Upload className="h-4 w-4 mr-2" />
-            Upload Document
-          </Link>
-        } 
+      <PageHeader
+        title="Document Analysis"
+        description="Select a contract or document to run AI extraction, risk assessment, and clause analysis."
       />
-      
+
       {loading ? (
         <div className="flex flex-col items-center justify-center h-[40vh]">
           <Loader2 className="h-8 w-8 animate-spin text-[var(--brand-red)] mb-4" />
@@ -49,8 +43,8 @@ export default function DocumentLibraryPage() {
       ) : documents.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-[40vh] border border-dashed rounded-xl text-center p-8">
           <FolderOpen className="h-12 w-12 text-muted-foreground opacity-40 mb-4" />
-          <h3 className="text-lg font-semibold mb-1">No documents uploaded yet</h3>
-          <p className="text-sm text-muted-foreground mb-4">Upload contracts or agreements to get started.</p>
+          <h3 className="text-lg font-semibold mb-1">No documents uploaded</h3>
+          <p className="text-sm text-muted-foreground mb-4">Upload a document first to run AI analysis.</p>
           <Link href="/upload" className={buttonVariants()}>Upload Document</Link>
         </div>
       ) : (
@@ -58,10 +52,10 @@ export default function DocumentLibraryPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
+                <TableHead>Document</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead>Upload Date</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Uploaded</TableHead>
+                <TableHead>Compliance Score</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
@@ -69,10 +63,10 @@ export default function DocumentLibraryPage() {
               {documents.map((doc) => (
                 <TableRow key={doc.id} className="hover:bg-[var(--surface-hover)] transition-colors">
                   <TableCell className="font-semibold">
-                    <Link href={`/documents/${doc.id}`} className="flex items-center gap-2 hover:text-[var(--brand-red)] transition-colors">
-                      <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="truncate max-w-[280px]">{doc.original_name || doc.filename}</span>
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      <span>{doc.original_name || doc.filename}</span>
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="capitalize">
@@ -83,14 +77,19 @@ export default function DocumentLibraryPage() {
                     {new Date(doc.uploaded_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    <StatusBadge status={doc.status || "completed"} />
+                    {doc.compliance_score !== null && doc.compliance_score !== undefined ? (
+                      <span className="font-semibold text-[var(--success)]">{doc.compliance_score}%</span>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">Not analyzed</span>
+                    )}
                   </TableCell>
-                  <TableCell className="text-right space-x-2">
-                    <Link href={`/analysis/${doc.id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
+                  <TableCell className="text-right">
+                    <Link
+                      href={`/analysis/${doc.id}`}
+                      className={buttonVariants({ variant: "default", size: "sm" })}
+                    >
+                      <Sparkles className="h-3.5 w-3.5 mr-1.5" />
                       Analyze
-                    </Link>
-                    <Link href={`/documents/${doc.id}`} className={buttonVariants({ variant: "ghost", size: "sm" })}>
-                      View
                     </Link>
                   </TableCell>
                 </TableRow>

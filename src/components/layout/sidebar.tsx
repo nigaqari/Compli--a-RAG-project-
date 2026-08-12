@@ -35,7 +35,7 @@ const navGroups = [
     label: "Intelligence",
     links: [
       { href: "/chat", label: "AI Chat", icon: MessageSquare },
-      { href: "/analysis/placeholder", label: "Document Analysis", icon: FileText },
+      { href: "/analysis", label: "Document Analysis", icon: FileText },
     ],
   },
   {

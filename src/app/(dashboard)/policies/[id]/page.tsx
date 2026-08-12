@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, use } from "react"
 import { PageHeader } from "@/components/shared/page-header"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { policiesApi, PolicyVersion } from "@/lib/api/policies"
@@ -29,7 +29,10 @@ const statusClass = (status: string) => {
   }
 }
 
-export default function PolicyDetailPage({ params }: { params: { id: string } }) {
+export default function PolicyDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params)
+  const id = resolvedParams.id
+
   const [versions, setVersions] = useState<PolicyVersion[]>([])
   const [loading, setLoading] = useState(true)
   const [uploadOpen, setUploadOpen] = useState(false)
@@ -42,7 +45,7 @@ export default function PolicyDetailPage({ params }: { params: { id: string } })
 
   const fetchVersions = async () => {
     try {
-      const v = await policiesApi.getPolicyVersions(params.id)
+      const v = await policiesApi.getPolicyVersions(id)
       setVersions(v)
     } catch (e) {
       console.error(e)
@@ -51,14 +54,14 @@ export default function PolicyDetailPage({ params }: { params: { id: string } })
     }
   }
 
-  useEffect(() => { fetchVersions() }, [params.id])
+  useEffect(() => { fetchVersions() }, [id])
 
   const handleUpload = async () => {
     if (!selectedFile) return
     setUploading(true)
     setUploadError(null)
     try {
-      await policiesApi.uploadNewVersion(params.id, selectedFile, changeNote)
+      await policiesApi.uploadNewVersion(id, selectedFile, changeNote)
       setUploadOpen(false)
       setSelectedFile(null)
       setChangeNote("")

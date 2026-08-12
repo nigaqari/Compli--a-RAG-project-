@@ -1,3 +1,5 @@
+const API_BASE = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
+
 export interface ComplianceSuggestion {
   id: string
   text: string
@@ -44,29 +46,29 @@ export interface UnifiedRisk {
 
 export const complianceApi = {
   triggerCheck: async (documentId: string, policyId: string): Promise<{message: string, result_id: string}> => {
-    const res = await fetch(`/api/v1/documents/${documentId}/compliance-check?policy_id=${policyId}`, {
+    const res = await fetch(`${API_BASE}/api/v1/documents/${documentId}/compliance-check?policy_id=${policyId}`, {
       method: 'POST'
     })
     if (!res.ok) throw new Error(await res.text())
     return res.json()
   },
   getResults: async (documentId: string): Promise<ComplianceResult[]> => {
-    const res = await fetch(`/api/v1/documents/${documentId}/compliance-results`)
+    const res = await fetch(`${API_BASE}/api/v1/documents/${documentId}/compliance-results`)
     if (!res.ok) throw new Error('Failed to fetch results')
     return res.json()
   },
   getAllResults: async (): Promise<ComplianceResult[]> => {
-    const res = await fetch(`/api/v1/compliance-results`)
+    const res = await fetch(`${API_BASE}/api/v1/compliance-results`)
     if (!res.ok) throw new Error('Failed to fetch results')
     return res.json()
   },
   getResultDetail: async (resultId: string): Promise<ComplianceResult> => {
-    const res = await fetch(`/api/v1/compliance-results/${resultId}`)
+    const res = await fetch(`${API_BASE}/api/v1/compliance-results/${resultId}`)
     if (!res.ok) throw new Error('Failed to fetch result')
     return res.json()
   },
   getRiskCenter: async (): Promise<UnifiedRisk[]> => {
-    const res = await fetch('/api/v1/risk-center')
+    const res = await fetch(`${API_BASE}/api/v1/risk-center`)
     if (!res.ok) throw new Error('Failed to fetch risk center data')
     return res.json()
   }

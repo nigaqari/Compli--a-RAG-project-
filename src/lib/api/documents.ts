@@ -1,0 +1,39 @@
+const API_BASE = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
+
+export interface DocumentItem {
+  id: string
+  filename: string
+  original_name: string
+  document_type: 'contract' | 'policy' | 'nda' | 'sla'
+  status?: string
+  compliance_score?: number | null
+  owner_id: string
+  uploaded_at: string
+  updated_at: string
+}
+
+export const documentsApi = {
+  getDocuments: async (): Promise<DocumentItem[]> => {
+    const res = await fetch(`${API_BASE}/api/v1/documents/`)
+    if (!res.ok) throw new Error('Failed to fetch documents')
+    return res.json()
+  },
+  getDocument: async (id: string): Promise<DocumentItem> => {
+    const res = await fetch(`${API_BASE}/api/v1/documents/${id}`)
+    if (!res.ok) throw new Error('Failed to fetch document')
+    return res.json()
+  },
+  getStatus: async (id: string): Promise<{ processing_status: string; processing_error?: string; page_count?: number; chunk_count?: number }> => {
+    const res = await fetch(`${API_BASE}/api/v1/documents/${id}/status`)
+    if (!res.ok) throw new Error('Failed to fetch document status')
+    return res.json()
+  },
+  reprocess: async (id: string): Promise<void> => {
+    const res = await fetch(`${API_BASE}/api/v1/documents/${id}/reprocess`, { method: 'POST' })
+    if (!res.ok) throw new Error('Failed to reprocess document')
+  },
+  deleteDocument: async (id: string): Promise<void> => {
+    const res = await fetch(`${API_BASE}/api/v1/documents/${id}`, { method: 'DELETE' })
+    if (!res.ok) throw new Error('Failed to delete document')
+  }
+}
