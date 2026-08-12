@@ -21,6 +21,23 @@ export interface LoginResponse {
   message: string;
 }
 
+async function parseResponse<T>(res: Response, defaultErrMsg: string): Promise<T> {
+  const text = await res.text().catch(() => '');
+  let json: any = null;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    // Response was not JSON (e.g. 500 HTML error or plain string)
+  }
+
+  if (!res.ok) {
+    const errorDetail = json?.detail || (typeof json === 'string' ? json : null) || text || `${defaultErrMsg} (${res.status})`;
+    throw new Error(errorDetail);
+  }
+
+  return json as T;
+}
+
 export const authApi = {
   signup: async (fullName: string, email: string, password: string): Promise<User> => {
     const res = await fetch(`${API_BASE}/api/v1/auth/signup`, {
@@ -28,9 +45,7 @@ export const authApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ full_name: fullName, email, password })
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Signup failed');
-    return data;
+    return parseResponse<User>(res, 'Failed to create account');
   },
 
   login: async (email: string, password: string): Promise<LoginResponse> => {
@@ -39,9 +54,7 @@ export const authApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Login failed');
-    return data;
+    return parseResponse<LoginResponse>(res, 'Login failed');
   },
 
   verifyOtp: async (email: string, otpCode: string): Promise<AuthSuccess> => {
@@ -50,11 +63,10 @@ export const authApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, otp_code: otpCode })
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Invalid verification code');
+    const data = await parseResponse<AuthSuccess>(res, 'Invalid verification code');
 
     // Save token & user in localStorage
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && data.access_token) {
       localStorage.setItem('compli_token', data.access_token);
       localStorage.setItem('compli_user', JSON.stringify(data.user));
     }
@@ -67,9 +79,7 @@ export const authApi = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email })
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Failed to resend code');
-    return data;
+    return parseResponse<{ message: string }>(res, 'Failed to resend code');
   },
 
   getMe: async (): Promise<User> => {
@@ -77,8 +87,7 @@ export const authApi = {
     const res = await fetch(`${API_BASE}/api/v1/auth/me`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
-    if (!res.ok) throw new Error('Unauthorized');
-    return res.json();
+    return parseResponse<User>(res, 'Unauthorized');
   },
 
   updateProfile: async (fullName: string): Promise<User> => {
@@ -91,8 +100,7 @@ export const authApi = {
       },
       body: JSON.stringify({ full_name: fullName })
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Failed to update profile');
+    const data = await parseResponse<User>(res, 'Failed to update profile');
     if (typeof window !== 'undefined') {
       localStorage.setItem('compli_user', JSON.stringify(data));
     }
@@ -109,9 +117,7 @@ export const authApi = {
       },
       body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Failed to change password');
-    return data;
+    return parseResponse<{ message: string }>(res, 'Failed to change password');
   },
 
   logout: () => {
