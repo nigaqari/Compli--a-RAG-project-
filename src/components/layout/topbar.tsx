@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import {
   Search, Bell, FileText, BookMarked, AlertTriangle,
-  Scale, FileBarChart, Loader2, ArrowRight, Command as CommandIcon
+  Scale, FileBarChart, Loader2, ArrowRight, CheckCircle,
+  Settings, LogOut, User as UserIcon
 } from "lucide-react"
 import { ThemeToggle } from "./theme-toggle"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
@@ -16,14 +17,16 @@ import {
   CommandGroup, CommandItem
 } from "@/components/ui/command"
 import { searchApi, GlobalSearchResults } from "@/lib/api/search"
+import { authApi, User } from "@/lib/api/auth"
+import { reportsApi, ReportItem } from "@/lib/api/reports"
 
 const routeMap: Record<string, string> = {
   "dashboard": "Dashboard",
   "documents": "Document Library",
   "policies": "Policy Library",
   "upload": "Upload",
-  "chat": "AI Chat",
-  "analysis": "Analysis",
+  "chat": "Juris AI Chat",
+  "analysis": "Analysis Hub",
   "compliance": "Compliance Center",
   "risk": "Risk Center",
   "reports": "Report Center",
@@ -46,6 +49,22 @@ export function Topbar() {
     reports: []
   })
   const [loading, setLoading] = useState(false)
+
+  // Live User State
+  const [user, setUser] = useState<User | null>(null)
+  const [recentReports, setRecentReports] = useState<ReportItem[]>([])
+
+  useEffect(() => {
+    const u = authApi.getCurrentUser()
+    if (u) {
+      setUser(u)
+    } else {
+      authApi.getMe().then(setUser).catch(() => {})
+    }
+
+    // Load recent notifications
+    reportsApi.getReports().then(r => setRecentReports(r.slice(0, 3))).catch(() => {})
+  }, [])
 
   // Keyboard shortcut listener: Cmd+K / Ctrl+K
   useEffect(() => {
@@ -84,6 +103,13 @@ export function Topbar() {
   const handleSelect = (url: string) => {
     setOpen(false)
     router.push(url)
+  }
+
+  const getUserInitials = () => {
+    if (!user?.full_name) return "JD"
+    const parts = user.full_name.trim().split(" ")
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase()
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
   }
 
   const hasAnyResults = 
@@ -134,7 +160,7 @@ export function Topbar() {
         >
           <div className="flex items-center gap-2">
             <Search className="h-4 w-4" />
-            <span>Search anything...</span>
+            <span>Search contracts, risks...</span>
           </div>
           <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100">
             <span className="text-xs">⌘</span>K
@@ -143,46 +169,93 @@ export function Topbar() {
 
         <ThemeToggle />
 
-        {/* Notifications */}
+        {/* Notifications Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger className="relative h-9 w-9 inline-flex items-center justify-center rounded-lg transition-colors hover:bg-[var(--surface-hover)] cursor-pointer outline-none">
             <Bell className="h-[1.1rem] w-[1.1rem]" style={{ color: 'var(--text-secondary)' }} />
-            <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center rounded-full p-0 text-[10px] text-white" style={{ backgroundColor: 'var(--brand-red)' }}>
-              3
-            </Badge>
+            {recentReports.length > 0 && (
+              <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center rounded-full p-0 text-[10px] text-white" style={{ backgroundColor: 'var(--brand-red)' }}>
+                {recentReports.length}
+              </Badge>
+            )}
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
-            <DropdownMenuLabel style={{ color: 'var(--text-primary)' }}>Notifications</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-80" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+            <DropdownMenuLabel className="flex items-center justify-between" style={{ color: 'var(--text-primary)' }}>
+              <span>Recent Activity</span>
+              <span className="text-xs font-normal text-muted-foreground">{recentReports.length} events</span>
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem style={{ color: 'var(--text-secondary)' }}>New risk detected in NDA</DropdownMenuItem>
-            <DropdownMenuItem style={{ color: 'var(--text-secondary)' }}>Compliance report ready</DropdownMenuItem>
+            {recentReports.length === 0 ? (
+              <div className="py-4 text-center text-xs text-muted-foreground">
+                No new notifications
+              </div>
+            ) : (
+              recentReports.map(rep => (
+                <DropdownMenuItem 
+                  key={rep.id} 
+                  onClick={() => router.push('/reports')}
+                  className="cursor-pointer flex flex-col items-start gap-1 py-2"
+                >
+                  <div className="flex items-center gap-1.5 font-medium text-xs text-foreground">
+                    <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+                    <span>Report {rep.status === 'completed' ? 'Ready for Download' : 'Generating'}</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground truncate w-full">
+                    {rep.document_name || 'Contract Audit'}
+                  </p>
+                </DropdownMenuItem>
+              ))
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={() => router.push('/risk')}
+              className="text-xs text-[var(--brand-red)] font-semibold cursor-pointer justify-center"
+            >
+              View All Risks & Gaps →
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Profile */}
+        {/* Profile Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger className="rounded-full inline-flex items-center justify-center hover:ring-2 hover:ring-[var(--brand-red)] transition-all cursor-pointer outline-none">
             <Avatar className="h-8 w-8">
-              <AvatarFallback className="text-xs font-semibold text-white" style={{ backgroundColor: 'var(--brand-red)' }}>JD</AvatarFallback>
+              <AvatarFallback className="text-xs font-semibold text-white" style={{ backgroundColor: 'var(--brand-red)' }}>
+                {getUserInitials()}
+              </AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+          <DropdownMenuContent align="end" className="w-56" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Jane Doe</p>
-                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>jane.doe@example.com</p>
+                <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                  {user?.full_name || "Jane Doe"}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {user?.email || "jane.doe@example.com"}
+                </p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem style={{ color: 'var(--text-secondary)' }}>Profile</DropdownMenuItem>
-            <DropdownMenuItem style={{ color: 'var(--text-secondary)' }}>Settings</DropdownMenuItem>
+            <DropdownMenuItem 
+              className="cursor-pointer flex items-center gap-2"
+              onClick={() => router.push('/settings')}
+            >
+              <UserIcon className="h-4 w-4" /> Profile Details
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              className="cursor-pointer flex items-center gap-2"
+              onClick={() => router.push('/settings')}
+            >
+              <Settings className="h-4 w-4" /> Account Settings
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               style={{ color: 'var(--brand-red)' }}
-              className="cursor-pointer"
-              onClick={() => router.push('/login')}
+              className="cursor-pointer font-medium flex items-center gap-2"
+              onClick={() => authApi.logout()}
             >
-              Log out
+              <LogOut className="h-4 w-4" /> Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -222,6 +295,9 @@ export function Topbar() {
               </CommandItem>
               <CommandItem onSelect={() => handleSelect("/reports")}>
                 <FileBarChart className="h-4 w-4 mr-2" /> Reports Center
+              </CommandItem>
+              <CommandItem onSelect={() => handleSelect("/settings")}>
+                <Settings className="h-4 w-4 mr-2" /> Settings & Profile
               </CommandItem>
             </CommandGroup>
           )}
