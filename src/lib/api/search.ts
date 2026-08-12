@@ -1,0 +1,29 @@
+const API_BASE = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
+
+export interface SearchResultItem {
+  id: string;
+  title: string;
+  snippet: string;
+  type: 'document' | 'policy' | 'risk' | 'clause' | 'report';
+  severity?: string;
+  url: string;
+}
+
+export interface GlobalSearchResults {
+  documents: SearchResultItem[];
+  policies: SearchResultItem[];
+  risks: SearchResultItem[];
+  clauses: SearchResultItem[];
+  reports: SearchResultItem[];
+}
+
+export const searchApi = {
+  search: async (query: string, limit: number = 5): Promise<GlobalSearchResults> => {
+    if (!query.trim()) {
+      return { documents: [], policies: [], risks: [], clauses: [], reports: [] };
+    }
+    const res = await fetch(`${API_BASE}/api/v1/search/?q=${encodeURIComponent(query)}&limit=${limit}`);
+    if (!res.ok) throw new Error('Search failed');
+    return res.json();
+  }
+};

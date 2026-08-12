@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { analysisApi, AnalysisOut, AnalysisStatus } from "@/lib/api/analysis"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertCircle, Loader2, FolderOpen, ArrowLeft } from "lucide-react"
+import { AlertCircle, Loader2, FolderOpen, ArrowLeft, FileText } from "lucide-react"
 import Link from "next/link"
 
 export default function AnalysisPage({ params }: { params: Promise<{ id: string }> }) {
@@ -151,12 +151,21 @@ export default function AnalysisPage({ params }: { params: Promise<{ id: string 
       <PageHeader 
         title="Document Analysis" 
         action={
-          analysis.compliance_score !== null ? (
-            <div className="text-right">
-              <div className="text-sm text-muted-foreground mb-1">Compliance Score</div>
-              <div className="text-2xl font-bold text-[var(--risk-medium)]">{analysis.compliance_score}%</div>
-            </div>
-          ) : null
+          <div className="flex items-center gap-3">
+            <Link
+              href="/reports"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              <FileText className="h-4 w-4 mr-1.5 text-[var(--brand-red)]" />
+              Generate Report
+            </Link>
+            {analysis.compliance_score !== null && (
+              <div className="text-right pl-3 border-l">
+                <div className="text-xs text-muted-foreground">Compliance Score</div>
+                <div className="text-xl font-bold text-[var(--risk-medium)]">{analysis.compliance_score}%</div>
+              </div>
+            )}
+          </div>
         } 
       />
       
