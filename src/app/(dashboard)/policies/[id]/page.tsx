@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, use } from "react"
 import { PageHeader } from "@/components/shared/page-header"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { policiesApi, PolicyVersion } from "@/lib/api/policies"
+import { policiesApi, PolicyVersion, Policy } from "@/lib/api/policies"
 import { Loader2, UploadCloud, AlertCircle, CheckCircle, Clock, XCircle, FileText, ArrowLeft } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -33,6 +33,7 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
   const resolvedParams = use(params)
   const id = resolvedParams.id
 
+  const [policy, setPolicy] = useState<Policy | null>(null)
   const [versions, setVersions] = useState<PolicyVersion[]>([])
   const [loading, setLoading] = useState(true)
   const [uploadOpen, setUploadOpen] = useState(false)
@@ -43,10 +44,14 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
   const [dragOver, setDragOver] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const fetchVersions = async () => {
+  const fetchPolicyData = async () => {
     try {
-      const v = await policiesApi.getPolicyVersions(id)
-      setVersions(v)
+      const [polData, vData] = await Promise.all([
+        policiesApi.getPolicy(id).catch(() => null),
+        policiesApi.getPolicyVersions(id).catch(() => [])
+      ])
+      if (polData) setPolicy(polData)
+      setVersions(vData || [])
     } catch (e) {
       console.error(e)
     } finally {
@@ -54,7 +59,7 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
     }
   }
 
-  useEffect(() => { fetchVersions() }, [id])
+  useEffect(() => { fetchPolicyData() }, [id])
 
   const handleUpload = async () => {
     if (!selectedFile) return
@@ -66,7 +71,7 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
       setSelectedFile(null)
       setChangeNote("")
       setLoading(true)
-      await fetchVersions()
+      await fetchPolicyData()
     } catch (e: any) {
       setUploadError(e.message || "Upload failed")
     } finally {
@@ -103,13 +108,13 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
             <ArrowLeft className="h-4 w-4" /> Back to Policy Library
           </Link>
           <PageHeader
-            title="Policy Details"
+            title={policy?.name || "Policy Details"}
             description="Manage policy versions and review AI-extracted requirements."
           />
         </div>
         <Button
           id="upload-new-version-btn"
-          className="bg-[var(--brand-red)] hover:bg-[var(--brand-red)]/90 mt-2"
+          className="bg-[var(--brand-red)] hover:bg-[var(--brand-red)]/90 mt-2 text-white"
           onClick={() => setUploadOpen(true)}
         >
           <UploadCloud className="h-4 w-4 mr-2" />
@@ -179,8 +184,8 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
                   {currentVersion.requirements.map(req => (
                     <div key={req.id} className="p-4 border rounded-lg bg-[var(--surface-hover)] hover:border-[var(--brand-red)]/30 transition-colors">
                       <div className="flex items-start justify-between gap-3 mb-2">
-                        <Badge variant="secondary" className="text-xs shrink-0">
-                          {req.category.replace(/_/g, " ")}
+                        <Badge variant="secondary" className="text-xs shrink-0 capitalize">
+                          {req.category ? req.category.replace(/_/g, " ") : "Requirement"}
                         </Badge>
                         {req.mandatory ? (
                           <Badge className="bg-[var(--brand-red)] hover:bg-[var(--brand-red)] text-white text-xs shrink-0">
@@ -279,7 +284,7 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
             </Button>
             <Button
               id="version-upload-submit"
-              className="bg-[var(--brand-red)] hover:bg-[var(--brand-red)]/90"
+              className="bg-[var(--brand-red)] hover:bg-[var(--brand-red)]/90 text-white"
               onClick={handleUpload}
               disabled={!selectedFile || uploading}
             >

@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
   Send, MessageSquarePlus, Trash2, Sparkles,
-  FileText, ShieldCheck, Scale, AlertTriangle, ChevronRight, HelpCircle
+  FileText, ShieldCheck, Scale, AlertTriangle, ChevronRight,
+  HelpCircle, Paperclip, UploadCloud, Loader2, CheckCircle2
 } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { chatApi, Conversation, ChatMessage } from "@/lib/api/chat"
 import { documentsApi, DocumentItem } from "@/lib/api/documents"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -32,11 +32,16 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [documents, setDocuments] = useState<DocumentItem[]>([])
   const [selectedDocScope, setSelectedDocScope] = useState<string>("all")
+  const [isUploadingInChat, setIsUploadingInChat] = useState(false)
+  const [uploadStatusText, setUploadStatusText] = useState("")
+  const [isDragging, setIsDragging] = useState(false)
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const chatFileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetchConversations()
-    documentsApi.getDocuments().then(setDocuments).catch(() => {})
+    fetchDocuments()
   }, [])
 
   useEffect(() => {
@@ -50,7 +55,16 @@ export default function ChatPage() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
+  }, [messages, isUploadingInChat])
+
+  const fetchDocuments = async () => {
+    try {
+      const data = await documentsApi.getDocuments()
+      setDocuments(data)
+    } catch (err) {
+      console.error("Failed to load documents", err)
+    }
+  }
 
   const fetchConversations = async () => {
     try {
@@ -132,6 +146,51 @@ export default function ChatPage() {
     }
   }
 
+  // Handle direct in-chat document upload
+  const handleInChatUpload = async (file: File) => {
+    if (!file || file.type !== "application/pdf") {
+      alert("Please upload a valid PDF document.")
+      return
+    }
+
+    setIsUploadingInChat(true)
+    setUploadStatusText(`Uploading and indexing "${file.name}"...`)
+
+    try {
+      const doc = await documentsApi.uploadDocument(file, "contract")
+      
+      // Auto-poll status until completed or 6 seconds
+      let attempts = 0
+      const poll = async () => {
+        try {
+          const s = await documentsApi.getStatus(doc.id)
+          if (s.processing_status === "completed" || attempts >= 3) {
+            await fetchDocuments()
+            setSelectedDocScope(doc.id)
+            setIsUploadingInChat(false)
+
+            // Add Assistant Greeting for this document
+            const welcomeMsg: ChatMessage = {
+              role: "assistant",
+              content: `I've successfully uploaded and indexed **${file.name}** into your library!\n\nI'm now scoped to this document. What would you like to know about it? For example, you can ask me to summarize its key obligations, identify high-risk liability clauses, or check termination terms.`
+            }
+            setMessages(prev => [...prev, welcomeMsg])
+          } else {
+            attempts++
+            setTimeout(poll, 2000)
+          }
+        } catch {
+          setIsUploadingInChat(false)
+        }
+      }
+      setTimeout(poll, 1500)
+    } catch (err: any) {
+      console.error("Upload error", err)
+      alert(err.message || "Failed to upload document")
+      setIsUploadingInChat(false)
+    }
+  }
+
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)]">
       <PageHeader 
@@ -141,11 +200,11 @@ export default function ChatPage() {
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground hidden sm:inline">Scope:</span>
             <Select value={selectedDocScope} onValueChange={(v) => setSelectedDocScope(v ?? 'all')}>
-              <SelectTrigger className="w-[200px] h-9 text-xs">
+              <SelectTrigger className="w-[220px] h-9 text-xs">
                 <SelectValue placeholder="Scope to document..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Library Documents</SelectItem>
+                <SelectItem value="all">🔍 All Library Documents ({documents.length})</SelectItem>
                 {documents.map(d => (
                   <SelectItem key={d.id} value={d.id}>{d.original_name || d.filename}</SelectItem>
                 ))}
@@ -195,7 +254,19 @@ export default function ChatPage() {
         </div>
         
         {/* Main Chat Area */}
-        <Card className="flex-1 flex flex-col overflow-hidden relative bg-[var(--surface)] border-[var(--border)]">
+        <Card 
+          className={`flex-1 flex flex-col overflow-hidden relative bg-[var(--surface)] border-[var(--border)] transition-colors ${
+            isDragging ? 'border-[var(--brand-red)] bg-[var(--brand-red)]/5' : ''
+          }`}
+          onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault()
+            setIsDragging(false)
+            const file = e.dataTransfer.files?.[0]
+            if (file) handleInChatUpload(file)
+          }}
+        >
           <div className="flex-1 overflow-auto p-6 space-y-6">
             
             {/* Friendly Greeting Welcome State */}
@@ -206,29 +277,46 @@ export default function ChatPage() {
                 </div>
                 <h3 className="text-2xl font-bold mb-2 tracking-tight">Hello! I'm Juris AI.</h3>
                 <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-                  Alright, which document or contract do you need help with today? You can ask me to analyze terms, check policy compliance, highlight legal risks, or answer general contracting questions.
+                  I can automatically search across all documents in your library to answer questions, highlight liabilities, evaluate compliance risks, or compare contracts.
                 </p>
 
-                {/* Quick Interactive Prompt Chips */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full text-left">
-                  {SUGGESTED_PROMPTS.map((item, idx) => {
-                    const Icon = item.icon
-                    return (
-                      <button
-                        key={idx}
-                        onClick={() => handleSend(item.prompt)}
-                        className="flex items-start gap-2.5 p-3 rounded-xl border border-[var(--border)] bg-muted/30 hover:bg-muted/70 hover:border-[var(--brand-red)]/50 transition-all text-xs group cursor-pointer"
-                      >
-                        <Icon className="h-4 w-4 text-[var(--brand-red)] shrink-0 mt-0.5" />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-foreground group-hover:text-[var(--brand-red)] transition-colors">{item.label}</div>
-                          <div className="text-[11px] text-muted-foreground truncate">{item.prompt}</div>
-                        </div>
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
-                      </button>
-                    )
-                  })}
-                </div>
+                {/* If no documents in library yet, provide direct in-chat upload card */}
+                {documents.length === 0 ? (
+                  <div className="w-full p-5 border border-dashed rounded-xl bg-muted/30 flex flex-col items-center gap-3 mb-6">
+                    <UploadCloud className="h-8 w-8 text-[var(--brand-red)] opacity-80" />
+                    <div className="text-center">
+                      <p className="text-sm font-semibold">No documents in your library yet</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Upload a contract or agreement directly here so I can analyze and search it for you.</p>
+                    </div>
+                    <Button
+                      onClick={() => chatFileInputRef.current?.click()}
+                      className="bg-[var(--brand-red)] hover:bg-[var(--brand-red)]/90 text-white text-xs h-9"
+                    >
+                      <Paperclip className="h-3.5 w-3.5 mr-1.5" /> Upload Document to Chat
+                    </Button>
+                  </div>
+                ) : (
+                  /* Quick Interactive Prompt Chips */
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full text-left">
+                    {SUGGESTED_PROMPTS.map((item, idx) => {
+                      const Icon = item.icon
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => handleSend(item.prompt)}
+                          className="flex items-start gap-2.5 p-3 rounded-xl border border-[var(--border)] bg-muted/30 hover:bg-muted/70 hover:border-[var(--brand-red)]/50 transition-all text-xs group cursor-pointer"
+                        >
+                          <Icon className="h-4 w-4 text-[var(--brand-red)] shrink-0 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-foreground group-hover:text-[var(--brand-red)] transition-colors">{item.label}</div>
+                            <div className="text-[11px] text-muted-foreground truncate">{item.prompt}</div>
+                          </div>
+                          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
@@ -283,6 +371,22 @@ export default function ChatPage() {
               </div>
             ))}
             
+            {/* Uploading In Progress Indicator */}
+            {isUploadingInChat && (
+              <div className="flex gap-3 max-w-[80%]">
+                <div className="h-8 w-8 rounded-full bg-[var(--brand-red)] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+                  AI
+                </div>
+                <div>
+                  <div className="bg-muted/40 border border-[var(--border)] p-4 rounded-2xl rounded-tl-sm text-sm shadow-sm flex items-center gap-2.5">
+                    <Loader2 className="h-4 w-4 animate-spin text-[var(--brand-red)] shrink-0" />
+                    <span className="text-xs text-foreground font-medium">{uploadStatusText}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Thinking / RAG Search Indicator */}
             {isLoading && (
               <div className="flex gap-3 max-w-[80%]">
                 <div className="h-8 w-8 rounded-full bg-[var(--brand-red)] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm animate-pulse">
@@ -291,7 +395,7 @@ export default function ChatPage() {
                 <div>
                   <div className="bg-muted/40 border border-[var(--border)] p-4 rounded-2xl rounded-tl-sm text-sm shadow-sm flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-[var(--brand-red)] animate-ping"></span>
-                    <span className="text-xs text-muted-foreground">Juris AI is thinking and searching contracts...</span>
+                    <span className="text-xs text-muted-foreground">Juris AI is analyzing documents across your library...</span>
                   </div>
                 </div>
               </div>
@@ -299,20 +403,45 @@ export default function ChatPage() {
             <div ref={messagesEndRef} />
           </div>
           
-          {/* Chat Input Bar */}
+          {/* Chat Input Bar with Direct File Upload Option */}
           <div className="p-4 bg-[var(--surface)] border-t border-[var(--border)]">
+            <input
+              type="file"
+              ref={chatFileInputRef}
+              accept="application/pdf"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) handleInChatUpload(file)
+                e.target.value = ""
+              }}
+            />
+            
             <div className="relative flex items-center">
+              {/* In-chat upload button */}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => chatFileInputRef.current?.click()}
+                disabled={isUploadingInChat || isLoading}
+                title="Upload & Analyze Document in Chat"
+                className="absolute left-2 text-muted-foreground hover:text-[var(--brand-red)] h-8 w-8 rounded-full z-10"
+              >
+                <Paperclip className="h-4 w-4" />
+              </Button>
+
               <Input 
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                placeholder="Ask Juris about your contracts, compliance standards, or legal terms..." 
-                className="pr-12 py-6 rounded-full border-[var(--border)] bg-muted/30 focus-visible:ring-[var(--brand-red)]/50 shadow-sm text-sm"
-                disabled={isLoading}
+                placeholder="Ask Juris about your contracts, or attach a document..." 
+                className="pl-11 pr-12 py-6 rounded-full border-[var(--border)] bg-muted/30 focus-visible:ring-[var(--brand-red)]/50 shadow-sm text-sm"
+                disabled={isLoading || isUploadingInChat}
               />
               <Button 
                 onClick={() => handleSend()}
-                disabled={!input.trim() || isLoading}
+                disabled={!input.trim() || isLoading || isUploadingInChat}
                 size="icon" 
                 className="absolute right-1.5 rounded-full bg-[var(--brand-red)] hover:bg-[var(--brand-red)]/90 text-white h-9 w-9"
               >
