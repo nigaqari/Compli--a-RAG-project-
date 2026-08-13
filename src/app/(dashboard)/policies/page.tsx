@@ -1,12 +1,16 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { PageHeader } from "@/components/shared/page-header"
 import { Button, buttonVariants } from "@/components/ui/button"
 import Link from "next/link"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, ShieldCheck, Upload } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Loader2, ShieldCheck, Upload, FileText, CheckCircle, AlertCircle } from "lucide-react"
 import { policiesApi, Policy } from "@/lib/api/policies"
 
 const categoryColors: Record<string, string> = {
@@ -20,19 +24,59 @@ export default function PolicyLibraryPage() {
   const [policies, setPolicies] = useState<Policy[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    async function fetchPolicies() {
-      try {
-        const data = await policiesApi.getPolicies()
-        setPolicies(data)
-      } catch (e) {
-        console.error(e)
-      } finally {
-        setLoading(false)
-      }
+  // Upload Policy Dialog State
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
+  const [policyFile, setPolicyFile] = useState<File | null>(null)
+  const [policyName, setPolicyName] = useState("")
+  const [category, setCategory] = useState<string>("data_privacy")
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const fetchPolicies = async () => {
+    try {
+      setLoading(true)
+      const data = await policiesApi.getPolicies()
+      setPolicies(data)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
     }
+  }
+
+  useEffect(() => {
     fetchPolicies()
   }, [])
+
+  const handleFileChange = (file: File | null) => {
+    setPolicyFile(file)
+    if (file && !policyName) {
+      const cleanName = file.name.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ")
+      setPolicyName(cleanName)
+    }
+  }
+
+  const handleUploadPolicy = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!policyFile || !policyName.trim()) return
+
+    setUploading(true)
+    setUploadError(null)
+
+    try {
+      await policiesApi.createPolicy(policyFile, policyName.trim(), category)
+      setUploadDialogOpen(false)
+      setPolicyFile(null)
+      setPolicyName("")
+      setCategory("data_privacy")
+      await fetchPolicies()
+    } catch (err: any) {
+      setUploadError(err.message || "Failed to upload policy")
+    } finally {
+      setUploading(false)
+    }
+  }
 
   return (
     <div>
@@ -40,10 +84,19 @@ export default function PolicyLibraryPage() {
         title="Policy Library"
         description="Manage your organization's compliance policies and version history."
         action={
-          <Link href="/upload" className={buttonVariants({ variant: "default" })}>
+          <Button 
+            id="open-upload-policy-btn"
+            className="bg-[var(--brand-red)] hover:bg-[var(--brand-red)]/90 text-white"
+            onClick={() => {
+              setUploadDialogOpen(true)
+              setPolicyFile(null)
+              setPolicyName("")
+              setUploadError(null)
+            }}
+          >
             <Upload className="h-4 w-4 mr-2" />
             Upload Policy
-          </Link>
+          </Button>
         }
       />
 
@@ -57,7 +110,12 @@ export default function PolicyLibraryPage() {
           <ShieldCheck className="h-12 w-12 mb-4 text-[var(--text-secondary)] opacity-40" />
           <h3 className="text-lg font-semibold mb-1">No policies yet</h3>
           <p className="text-sm text-[var(--text-secondary)] mb-4">Upload your first policy to start running compliance checks.</p>
-          <Link href="/upload" className={buttonVariants()}>Upload Policy</Link>
+          <Button 
+            className="bg-[var(--brand-red)] hover:bg-[var(--brand-red)]/90 text-white"
+            onClick={() => setUploadDialogOpen(true)}
+          >
+            <Upload className="h-4 w-4 mr-2" /> Upload Policy
+          </Button>
         </div>
       ) : (
         <div className="border rounded-xl bg-[var(--surface)] overflow-hidden">
@@ -112,6 +170,99 @@ export default function PolicyLibraryPage() {
           </Table>
         </div>
       )}
+
+      {/* Upload Policy Dialog */}
+      <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Upload Compliance Policy</DialogTitle>
+            <DialogDescription>
+              Upload a standard policy PDF (e.g. GDPR, Vendor Risk, Security Standards) to compare contracts against.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleUploadPolicy} className="space-y-4 pt-2">
+            {/* Drop Zone */}
+            <div
+              className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer hover:border-[var(--brand-red)]/50 transition-colors bg-[var(--surface-hover)]/40"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/pdf"
+                className="hidden"
+                onChange={e => handleFileChange(e.target.files?.[0] || null)}
+              />
+              {policyFile ? (
+                <div className="flex flex-col items-center gap-1.5 text-sm">
+                  <CheckCircle className="h-8 w-8 text-emerald-500" />
+                  <p className="font-semibold">{policyFile.name}</p>
+                  <p className="text-xs text-muted-foreground">{(policyFile.size / 1024 / 1024).toFixed(2)} MB · Click to replace</p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-1.5 text-muted-foreground">
+                  <FileText className="h-8 w-8 opacity-50" />
+                  <p className="font-medium text-sm">Click to select PDF or drag & drop</p>
+                  <p className="text-xs">Max 25MB · PDF only</p>
+                </div>
+              )}
+            </div>
+
+            {/* Policy Name */}
+            <div className="space-y-1.5">
+              <Label htmlFor="policy-name">Policy Name</Label>
+              <Input
+                id="policy-name"
+                placeholder="e.g. Global Data Privacy Standard 2026"
+                value={policyName}
+                onChange={e => setPolicyName(e.target.value)}
+                required
+              />
+            </div>
+
+            {/* Policy Category */}
+            <div className="space-y-1.5">
+              <Label htmlFor="policy-category">Category</Label>
+              <Select value={category} onValueChange={(val) => setCategory(val || 'data_privacy')}>
+                <SelectTrigger id="policy-category">
+                  <SelectValue placeholder="Select Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="data_privacy">Data Privacy (GDPR, CCPA)</SelectItem>
+                  <SelectItem value="vendor">Vendor Management & Procurement</SelectItem>
+                  <SelectItem value="security">Security & Infrastructure</SelectItem>
+                  <SelectItem value="hr">Human Resources & Employment</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {uploadError && (
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>{uploadError}</span>
+              </div>
+            )}
+
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="outline" onClick={() => setUploadDialogOpen(false)} disabled={uploading}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="bg-[var(--brand-red)] hover:bg-[var(--brand-red)]/90 text-white"
+                disabled={!policyFile || !policyName.trim() || uploading}
+              >
+                {uploading ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading...</>
+                ) : (
+                  <><Upload className="h-4 w-4 mr-2" /> Upload Policy</>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

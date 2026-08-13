@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { authApi } from "@/lib/api/auth";
 import {
   ShieldCheck, Loader2, AlertCircle, CheckCircle2,
-  ArrowLeft, RefreshCw, KeyRound
+  ArrowLeft, RefreshCw, KeyRound, MailCheck
 } from "lucide-react";
 
 function LoginForm() {
@@ -21,17 +21,29 @@ function LoginForm() {
   // Form State
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [pendingToken, setPendingToken] = useState("");
+  const [maskedEmail, setMaskedEmail] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [step, setStep] = useState<"credentials" | "otp">("credentials");
 
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(
     signupSuccess ? "Account created successfully! Please sign in below." : null
   );
 
-  // Step 1: Submit email & password -> triggers OTP email
+  // Cooldown countdown timer
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
+  // Step 1: Submit email & password -> triggers Gmail SMTP OTP
   const handleCredentialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -40,8 +52,11 @@ function LoginForm() {
 
     try {
       const res = await authApi.login(email, password);
-      if (res.status === "otp_required") {
+      if (res.requires_otp || res.status === "otp_required") {
+        setPendingToken(res.pending_token);
+        setMaskedEmail(res.masked_email || email);
         setStep("otp");
+        setCooldown(30);
       }
     } catch (err: any) {
       setError(err.message || "Failed to sign in. Please check your credentials.");
@@ -61,7 +76,7 @@ function LoginForm() {
     setError(null);
     setLoading(true);
     try {
-      await authApi.verifyOtp(email, otpCode);
+      await authApi.verifyOtp(pendingToken, otpCode);
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message || "Invalid or expired verification code.");
@@ -71,11 +86,16 @@ function LoginForm() {
   };
 
   const handleResendOtp = async () => {
+    if (cooldown > 0 || resending) return;
     setResending(true);
     setError(null);
     try {
-      await authApi.resendOtp(email);
-      setSuccessMessage("A fresh verification code has been dispatched to your email.");
+      const res = await authApi.resendOtp(pendingToken);
+      if (res.pending_token) {
+        setPendingToken(res.pending_token);
+      }
+      setSuccessMessage(`A fresh verification code was sent to ${res.masked_email || maskedEmail}.`);
+      setCooldown(30);
     } catch (err: any) {
       setError(err.message || "Failed to resend verification code.");
     } finally {
@@ -182,13 +202,13 @@ function LoginForm() {
               </div>
               <h1 className="text-2xl font-bold tracking-tight">Enter Verification Code</h1>
               <p className="text-sm text-muted-foreground">
-                We sent a 6-digit security code to <strong className="text-foreground">{email}</strong>.
+                We sent a 6-digit verification code to <strong className="text-foreground">{maskedEmail || email}</strong>.
               </p>
             </div>
 
             {successMessage && (
               <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                <MailCheck className="h-4 w-4 shrink-0" />
                 <span>{successMessage}</span>
               </div>
             )}
@@ -218,7 +238,7 @@ function LoginForm() {
                   />
                 </div>
                 <span className="text-xs text-muted-foreground text-center">
-                  Code expires in 5 minutes
+                  Code is valid for 5 minutes
                 </span>
               </div>
 
@@ -241,17 +261,17 @@ function LoginForm() {
                 onClick={() => { setStep("credentials"); setOtpCode(""); setError(null); }}
                 className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
               >
-                <ArrowLeft className="h-3.5 w-3.5" /> Back
+                <ArrowLeft className="h-3.5 w-3.5" /> Back to sign in
               </button>
 
               <button
                 type="button"
                 onClick={handleResendOtp}
-                disabled={resending}
-                className="inline-flex items-center gap-1 text-[var(--brand-red)] hover:underline font-semibold"
+                disabled={resending || cooldown > 0}
+                className="inline-flex items-center gap-1 text-[var(--brand-red)] hover:underline font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RefreshCw className={`h-3 w-3 ${resending ? 'animate-spin' : ''}`} />
-                Resend Code
+                {cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend Code"}
               </button>
             </div>
           </motion.div>

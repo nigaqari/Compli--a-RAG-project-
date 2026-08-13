@@ -1,3 +1,5 @@
+import { getAuthHeaders } from "./auth";
+
 const API_BASE = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
 
 export interface SearchResultItem {
@@ -22,7 +24,9 @@ export const searchApi = {
     if (!query.trim()) {
       return { documents: [], policies: [], risks: [], clauses: [], reports: [] };
     }
-    const res = await fetch(`${API_BASE}/api/v1/search/?q=${encodeURIComponent(query)}&limit=${limit}`);
+    const res = await fetch(`${API_BASE}/api/v1/search/?q=${encodeURIComponent(query)}&limit=${limit}`, {
+      headers: { ...getAuthHeaders() }
+    });
     if (!res.ok) throw new Error('Search failed');
     return res.json();
   }

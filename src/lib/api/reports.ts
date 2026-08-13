@@ -1,3 +1,5 @@
+import { getAuthHeaders } from "./auth";
+
 const API_BASE = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
 
 export type ReportType = 'executive_summary' | 'compliance' | 'risk_assessment' | 'complete_analysis';
@@ -18,13 +20,17 @@ export interface ReportItem {
 
 export const reportsApi = {
   getReports: async (): Promise<ReportItem[]> => {
-    const res = await fetch(`${API_BASE}/api/v1/reports/`);
+    const res = await fetch(`${API_BASE}/api/v1/reports/`, {
+      headers: { ...getAuthHeaders() }
+    });
     if (!res.ok) throw new Error('Failed to fetch reports');
     return res.json();
   },
 
   getReport: async (id: string): Promise<ReportItem> => {
-    const res = await fetch(`${API_BASE}/api/v1/reports/${id}`);
+    const res = await fetch(`${API_BASE}/api/v1/reports/${id}`, {
+      headers: { ...getAuthHeaders() }
+    });
     if (!res.ok) throw new Error('Failed to fetch report');
     return res.json();
   },
@@ -32,7 +38,10 @@ export const reportsApi = {
   createReport: async (documentId: string, reportType: ReportType): Promise<ReportItem> => {
     const res = await fetch(`${API_BASE}/api/v1/reports/`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
       body: JSON.stringify({ document_id: documentId, report_type: reportType })
     });
     if (!res.ok) throw new Error('Failed to generate report');
@@ -40,13 +49,18 @@ export const reportsApi = {
   },
 
   getStatus: async (id: string): Promise<{ id: string; status: ReportStatus; error?: string }> => {
-    const res = await fetch(`${API_BASE}/api/v1/reports/${id}/status`);
+    const res = await fetch(`${API_BASE}/api/v1/reports/${id}/status`, {
+      headers: { ...getAuthHeaders() }
+    });
     if (!res.ok) throw new Error('Failed to fetch report status');
     return res.json();
   },
 
   deleteReport: async (id: string): Promise<void> => {
-    const res = await fetch(`${API_BASE}/api/v1/reports/${id}`, { method: 'DELETE' });
+    const res = await fetch(`${API_BASE}/api/v1/reports/${id}`, {
+      method: 'DELETE',
+      headers: { ...getAuthHeaders() }
+    });
     if (!res.ok) throw new Error('Failed to delete report');
   }
 };

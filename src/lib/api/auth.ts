@@ -17,8 +17,23 @@ export interface AuthSuccess {
 
 export interface LoginResponse {
   status: 'otp_required';
+  requires_otp: boolean;
+  pending_token: string;
+  masked_email: string;
   email: string;
   message: string;
+}
+
+export interface ResendResponse {
+  pending_token: string;
+  masked_email: string;
+  message: string;
+}
+
+export function getAuthHeaders(): Record<string, string> {
+  if (typeof window === 'undefined') return {};
+  const token = localStorage.getItem('compli_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 async function parseResponse<T>(res: Response, defaultErrMsg: string): Promise<T> {
@@ -27,7 +42,7 @@ async function parseResponse<T>(res: Response, defaultErrMsg: string): Promise<T
   try {
     json = JSON.parse(text);
   } catch {
-    // Response was not JSON (e.g. 500 HTML error or plain string)
+    // Response was not JSON
   }
 
   if (!res.ok) {
@@ -57,11 +72,11 @@ export const authApi = {
     return parseResponse<LoginResponse>(res, 'Login failed');
   },
 
-  verifyOtp: async (email: string, otpCode: string): Promise<AuthSuccess> => {
+  verifyOtp: async (pendingToken: string, otpCode: string): Promise<AuthSuccess> => {
     const res = await fetch(`${API_BASE}/api/v1/auth/verify-otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, otp_code: otpCode })
+      body: JSON.stringify({ pending_token: pendingToken, otp_code: otpCode })
     });
     const data = await parseResponse<AuthSuccess>(res, 'Invalid verification code');
 
@@ -73,13 +88,13 @@ export const authApi = {
     return data;
   },
 
-  resendOtp: async (email: string): Promise<{ message: string }> => {
+  resendOtp: async (pendingToken: string): Promise<ResendResponse> => {
     const res = await fetch(`${API_BASE}/api/v1/auth/resend-otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
+      body: JSON.stringify({ pending_token: pendingToken })
     });
-    return parseResponse<{ message: string }>(res, 'Failed to resend code');
+    return parseResponse<ResendResponse>(res, 'Failed to resend code');
   },
 
   getMe: async (): Promise<User> => {

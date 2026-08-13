@@ -5,9 +5,10 @@ import { PageHeader } from "@/components/shared/page-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { complianceApi, ComplianceResult, ComplianceFinding, ComplianceSuggestion } from "@/lib/api/compliance"
 import { policiesApi, Policy } from "@/lib/api/policies"
+import { documentsApi } from "@/lib/api/documents"
 import {
   Loader2, AlertCircle, FileText, CheckCircle, Play, XCircle,
-  Clock, ChevronDown, ChevronUp, Lightbulb, AlertTriangle
+  Clock, ChevronDown, ChevronUp, Lightbulb, AlertTriangle, ShieldCheck
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,7 +16,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import Link from "next/link"
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -173,7 +173,7 @@ export default function ComplianceCenterPage() {
 
   useEffect(() => { fetchAll() }, [fetchAll])
 
-  // Load document list when dialog opens
+  // Load document and policy list when dialog opens
   const openRunDialog = async () => {
     setRunDialogOpen(true)
     setSelectedDocId("")
@@ -181,9 +181,16 @@ export default function ComplianceCenterPage() {
     setRunError(null)
     setLoadingDocs(true)
     try {
-      const res = await fetch("/api/v1/documents")
-      const data = await res.json()
-      setDocuments(data.filter((d: any) => d.document_type === "contract").map((d: any) => ({ id: d.id, name: d.original_name || d.filename })))
+      const [docs, pols] = await Promise.all([
+        documentsApi.getDocuments(),
+        policiesApi.getPolicies()
+      ])
+      setDocuments(
+        docs
+          .filter(d => d.document_type !== "policy")
+          .map(d => ({ id: d.id, name: d.original_name || d.filename }))
+      )
+      setPolicies(pols)
     } catch {
       setDocuments([])
     } finally {
@@ -204,7 +211,7 @@ export default function ComplianceCenterPage() {
       }, 2000)
     } catch (e: any) {
       let msg = "Failed to start compliance check"
-      try { msg = JSON.parse(e.message)?.detail || msg } catch {}
+      try { msg = JSON.parse(e.message)?.detail || e.message || msg } catch {}
       setRunError(msg)
     } finally {
       setRunning(false)
@@ -237,7 +244,7 @@ export default function ComplianceCenterPage() {
         action={
           <Button
             id="run-compliance-check-btn"
-            className="bg-[var(--brand-red)] hover:bg-[var(--brand-red)]/90"
+            className="bg-[var(--brand-red)] hover:bg-[var(--brand-red)]/90 text-white"
             onClick={openRunDialog}
           >
             <Play className="h-4 w-4 mr-2" /> Run Compliance Check
@@ -289,13 +296,13 @@ export default function ComplianceCenterPage() {
         <CardContent>
           {results.length === 0 ? (
             <div className="text-center py-14 text-muted-foreground border border-dashed rounded-xl">
-              <FileText className="mx-auto h-10 w-10 mb-3 opacity-30" />
+              <ShieldCheck className="mx-auto h-10 w-10 mb-3 opacity-30 text-[var(--brand-red)]" />
               <p className="font-medium mb-1">No compliance checks run yet.</p>
-              <p className="text-sm mb-4">Click "Run Compliance Check" to compare a contract against a policy.</p>
+              <p className="text-sm mb-4">Click "Run Compliance Check" to compare a contract against an uploaded policy.</p>
               <Button
                 id="run-compliance-check-empty-btn"
                 size="sm"
-                className="bg-[var(--brand-red)] hover:bg-[var(--brand-red)]/90"
+                className="bg-[var(--brand-red)] hover:bg-[var(--brand-red)]/90 text-white"
                 onClick={openRunDialog}
               >
                 <Play className="h-4 w-4 mr-2" /> Run First Check
@@ -373,14 +380,14 @@ export default function ComplianceCenterPage() {
           <DialogHeader>
             <DialogTitle>Run Compliance Check</DialogTitle>
             <DialogDescription>
-              Select a contract and a policy to compare them. The document must have completed analysis first.
+              Select a contract and a policy from your library to compare them.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             {/* Document Select */}
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Contract Document</label>
+              <label className="text-sm font-medium mb-1.5 block">Contract / Agreement</label>
               {loadingDocs ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground p-2">
                   <Loader2 className="h-4 w-4 animate-spin" /> Loading documents...
@@ -388,11 +395,11 @@ export default function ComplianceCenterPage() {
               ) : (
                 <Select value={selectedDocId} onValueChange={(v) => setSelectedDocId(v ?? '')}>
                   <SelectTrigger id="compliance-doc-select">
-                    <SelectValue placeholder="Select a contract…" />
+                    <SelectValue placeholder="Select a contract or agreement…" />
                   </SelectTrigger>
                   <SelectContent>
                     {documents.length === 0
-                      ? <SelectItem value="_empty" disabled>No contracts available</SelectItem>
+                      ? <SelectItem value="_empty" disabled>No documents available in library</SelectItem>
                       : documents.map(d => (
                           <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
                         ))
@@ -404,14 +411,14 @@ export default function ComplianceCenterPage() {
 
             {/* Policy Select */}
             <div>
-              <label className="text-sm font-medium mb-1.5 block">Policy</label>
+              <label className="text-sm font-medium mb-1.5 block">Compliance Policy</label>
               <Select value={selectedPolicyId} onValueChange={(v) => setSelectedPolicyId(v ?? '')}>
                 <SelectTrigger id="compliance-policy-select">
-                  <SelectValue placeholder="Select a policy…" />
+                  <SelectValue placeholder="Select an organization policy…" />
                 </SelectTrigger>
                 <SelectContent>
                   {policies.length === 0
-                    ? <SelectItem value="_empty" disabled>No policies uploaded</SelectItem>
+                    ? <SelectItem value="_empty" disabled>No policies uploaded yet</SelectItem>
                     : policies.map(p => (
                         <SelectItem key={p.id} value={p.id}>
                           {p.name} <span className="text-muted-foreground ml-1 text-xs">(v{p.current_version})</span>
@@ -420,6 +427,11 @@ export default function ComplianceCenterPage() {
                   }
                 </SelectContent>
               </Select>
+              {policies.length === 0 && (
+                <p className="text-xs text-amber-500 mt-1.5">
+                  You haven't uploaded any policies yet. <Link href="/policies" className="underline font-semibold">Upload a policy in Policy Library</Link>.
+                </p>
+              )}
             </div>
 
             {runError && (
@@ -434,7 +446,7 @@ export default function ComplianceCenterPage() {
             <Button variant="outline" onClick={() => setRunDialogOpen(false)} disabled={running}>Cancel</Button>
             <Button
               id="compliance-run-submit"
-              className="bg-[var(--brand-red)] hover:bg-[var(--brand-red)]/90"
+              className="bg-[var(--brand-red)] hover:bg-[var(--brand-red)]/90 text-white"
               onClick={handleRunCheck}
               disabled={!selectedDocId || !selectedPolicyId || running}
             >
