@@ -5,11 +5,12 @@ import { Badge } from "@/components/ui/badge"
 import { PDFViewer } from "@/components/shared/pdf-viewer"
 import Link from "next/link"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
 
 async function fetchDoc(id: string) {
   try {
-    const res = await fetch(`${API_BASE}/api/v1/documents/${id}`, { cache: "no-store" })
+    const baseUrl = API_BASE.endsWith("/api/v1") ? API_BASE : `${API_BASE}/api/v1`
+    const res = await fetch(`${baseUrl}/documents/${id}`, { cache: "no-store" })
     if (res.ok) return await res.json()
   } catch {}
   return null
