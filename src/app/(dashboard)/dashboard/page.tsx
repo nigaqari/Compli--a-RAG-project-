@@ -69,7 +69,6 @@ export default function DashboardPage() {
           </div>
           <div className="min-w-0">
             <div className="text-xs font-semibold text-foreground">Upload Document</div>
-            <div className="text-[11px] text-muted-foreground truncate">PDF parsing & OCR</div>
           </div>
         </Link>
 
@@ -82,7 +81,6 @@ export default function DashboardPage() {
           </div>
           <div className="min-w-0">
             <div className="text-xs font-semibold text-foreground">Juris AI Chat</div>
-            <div className="text-[11px] text-muted-foreground truncate">Ask questions & RAG</div>
           </div>
         </Link>
 
@@ -95,7 +93,6 @@ export default function DashboardPage() {
           </div>
           <div className="min-w-0">
             <div className="text-xs font-semibold text-foreground">Compliance Check</div>
-            <div className="text-[11px] text-muted-foreground truncate">Policy gap analysis</div>
           </div>
         </Link>
 
@@ -108,7 +105,6 @@ export default function DashboardPage() {
           </div>
           <div className="min-w-0">
             <div className="text-xs font-semibold text-foreground">Report Center</div>
-            <div className="text-[11px] text-muted-foreground truncate">Generate audit PDFs</div>
           </div>
         </Link>
       </div>

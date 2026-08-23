@@ -43,7 +43,6 @@ const navGroups = [
     links: [
       { href: "/compliance", label: "Compliance Center", icon: ShieldCheck },
       { href: "/risk", label: "Risk Center", icon: AlertTriangle },
-      { href: "/audit-logs", label: "Audit Logs", icon: ClipboardList },
     ],
   },
   {

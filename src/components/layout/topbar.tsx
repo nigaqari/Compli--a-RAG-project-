@@ -30,7 +30,6 @@ const routeMap: Record<string, string> = {
   "compliance": "Compliance Center",
   "risk": "Risk Center",
   "reports": "Report Center",
-  "audit-logs": "Audit Logs",
   "settings": "Settings",
 }
 
