@@ -17,6 +17,7 @@ from app.core.security import (
 from app.services.otp_service import (
     initiate_otp, verify_otp_token_and_code, resend_otp_code
 )
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -97,7 +98,7 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=403, detail="Account is disabled. Please contact an administrator.")
 
     # Generate, hash, and dispatch Gmail SMTP OTP
-    pending_token, masked_email = initiate_otp(db, user, purpose="login")
+    pending_token, masked_email, code = initiate_otp(db, user, purpose="login")
 
     # Record Audit Log
     audit = AuditLog(
@@ -109,13 +110,17 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
     db.add(audit)
     db.commit()
 
+    msg = f"Verification code sent to {masked_email}."
+    if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
+        msg = f"Verification code sent to {masked_email}. (Code: {code})"
+
     return LoginResponse(
         status="otp_required",
         requires_otp=True,
         pending_token=pending_token,
         masked_email=masked_email,
         email=clean_email,
-        message=f"Verification code sent to {masked_email}."
+        message=msg
     )
 
 @router.post("/verify-otp", response_model=AuthSuccessResponse)
@@ -159,14 +164,18 @@ def resend_login_otp(req: ResendOtpRequest, db: Session = Depends(get_db)):
         user = db.query(User).filter(User.email == req.email.lower().strip()).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found.")
-        pending_token, masked_email = initiate_otp(db, user)
+        pending_token, masked_email, code = initiate_otp(db, user)
     else:
-        pending_token, masked_email = resend_otp_code(db, req.pending_token)
+        pending_token, masked_email, code = resend_otp_code(db, req.pending_token)
+
+    msg = f"A fresh verification code was sent to {masked_email}."
+    if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
+        msg = f"A fresh verification code was sent to {masked_email}. (Code: {code})"
 
     return ResendOtpResponse(
         pending_token=pending_token,
         masked_email=masked_email,
-        message=f"A fresh verification code was sent to {masked_email}."
+        message=msg
     )
 
 @router.get("/me", response_model=UserOut)

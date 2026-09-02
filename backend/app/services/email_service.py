@@ -80,10 +80,10 @@ def send_otp_email(to_email: str, otp_code: str) -> bool:
     print(f"==========================================\n")
 
     smtp_host = settings.SMTP_HOST
-    smtp_port = settings.SMTP_PORT
-    smtp_user = settings.SMTP_USER
-    smtp_password = settings.SMTP_PASSWORD
-    from_email = settings.FROM_EMAIL or smtp_user or "security@compli.ai"
+    smtp_port = int(settings.SMTP_PORT) if settings.SMTP_PORT else 587
+    smtp_user = settings.SMTP_USER.strip() if settings.SMTP_USER else ""
+    smtp_password = settings.SMTP_PASSWORD.replace(" ", "").strip() if settings.SMTP_PASSWORD else ""
+    from_email = (settings.FROM_EMAIL or smtp_user or "security@compli.ai").strip()
 
     if smtp_host and smtp_user and smtp_password:
         try:
@@ -98,13 +98,17 @@ def send_otp_email(to_email: str, otp_code: str) -> bool:
             msg.attach(MIMEText(text_content, "plain"))
             msg.attach(MIMEText(html_content, "html"))
 
-            with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=12) as server:
                 server.starttls()
                 server.login(smtp_user, smtp_password)
                 server.sendmail(from_email, [to_email], msg.as_string())
             logger.info(f"Successfully sent OTP email to {to_email} via SMTP ({smtp_host}:{smtp_port})")
+            print(f"[SUCCESS] OTP Email dispatched to {to_email} via {smtp_user}")
             return True
         except Exception as e:
-            logger.error(f"SMTP dispatch failed: {e}. OTP was logged to console.")
+            logger.error(f"SMTP dispatch failed to {to_email}: {e}")
+            print(f"[ERROR] SMTP dispatch failed to {to_email}: {e}")
             return False
+    else:
+        print("[NOTICE] SMTP credentials missing. OTP code logged above.")
     return True

@@ -55,6 +55,9 @@ function LoginForm() {
       if (res.requires_otp || res.status === "otp_required") {
         setPendingToken(res.pending_token);
         setMaskedEmail(res.masked_email || email);
+        if (res.message) {
+          setSuccessMessage(res.message);
+        }
         setStep("otp");
         setCooldown(30);
       }

@@ -23,13 +23,13 @@ def invalidate_existing_otps(db: Session, user_id: str, purpose: str = "login") 
     ).update({"consumed": True})
     db.commit()
 
-def initiate_otp(db: Session, user: User, purpose: str = "login") -> tuple[str, str]:
+def initiate_otp(db: Session, user: User, purpose: str = "login") -> tuple[str, str, str]:
     """
     1. Invalidates old OTPs
     2. Generates secure 6-digit code
     3. Hashes code and saves to database
     4. Dispatches styled HTML email via Gmail SMTP
-    5. Returns (pending_token, masked_email)
+    5. Returns (pending_token, masked_email, code)
     """
     # 1. Invalidate previous codes
     invalidate_existing_otps(db, user.id, purpose)
@@ -58,7 +58,7 @@ def initiate_otp(db: Session, user: User, purpose: str = "login") -> tuple[str, 
     pending_token = create_pending_otp_token(user.id)
     masked = mask_email(user.email)
 
-    return pending_token, masked
+    return pending_token, masked, code
 
 def verify_otp_token_and_code(db: Session, pending_token: str, code: str) -> User:
     """
@@ -140,7 +140,7 @@ def verify_otp_token_and_code(db: Session, pending_token: str, code: str) -> Use
     db.commit()
     return user
 
-def resend_otp_code(db: Session, pending_token: str) -> tuple[str, str]:
+def resend_otp_code(db: Session, pending_token: str) -> tuple[str, str, str]:
     """
     Resends OTP for user in pending token, enforcing a 30-second cooldown.
     """
