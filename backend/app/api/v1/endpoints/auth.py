@@ -17,6 +17,7 @@ from app.core.security import (
 from app.services.otp_service import (
     initiate_otp, verify_otp_token_and_code, resend_otp_code
 )
+from app.services.email_service import send_otp_email
 from app.core.config import settings
 
 router = APIRouter()
@@ -99,6 +100,7 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
 
     # Generate, hash, and dispatch Gmail SMTP OTP
     pending_token, masked_email, code = initiate_otp(db, user, purpose="login")
+    email_sent = send_otp_email(user.email, code)
 
     # Record Audit Log
     audit = AuditLog(
@@ -111,8 +113,8 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
     db.commit()
 
     msg = f"Verification code sent to {masked_email}."
-    if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
-        msg = f"Verification code sent to {masked_email}. (Code: {code})"
+    if not email_sent or not settings.SMTP_USER or not settings.SMTP_PASSWORD:
+        msg = f"Verification code sent to {masked_email}. (Your OTP Code: {code})"
 
     return LoginResponse(
         status="otp_required",
@@ -168,9 +170,11 @@ def resend_login_otp(req: ResendOtpRequest, db: Session = Depends(get_db)):
     else:
         pending_token, masked_email, code = resend_otp_code(db, req.pending_token)
 
+    email_sent = send_otp_email(user.email if 'user' in locals() else "", code)
+
     msg = f"A fresh verification code was sent to {masked_email}."
-    if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
-        msg = f"A fresh verification code was sent to {masked_email}. (Code: {code})"
+    if not email_sent or not settings.SMTP_USER or not settings.SMTP_PASSWORD:
+        msg = f"A fresh verification code was sent to {masked_email}. (Your OTP Code: {code})"
 
     return ResendOtpResponse(
         pending_token=pending_token,
