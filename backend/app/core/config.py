@@ -2,14 +2,14 @@ from pydantic_settings import BaseSettings
 from typing import List, Optional
 
 class Settings(BaseSettings):
-    DATABASE_URL: str
-    JWT_SECRET_KEY: str
+    DATABASE_URL: str = "sqlite:///./compli.db"
+    JWT_SECRET_KEY: str = "compli_production_jwt_secret_key_2026_super_secure_rag"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-    CORS_ORIGINS: List[str] = ["http://localhost:3000"]
-    ENV: str = "dev"
-    GROQ_API_KEY: str
+    CORS_ORIGINS: List[str] = ["*"]
+    ENV: str = "production"
+    GROQ_API_KEY: str = ""
 
     # SMTP & OTP Configuration
     SMTP_HOST: str = "smtp.gmail.com"
