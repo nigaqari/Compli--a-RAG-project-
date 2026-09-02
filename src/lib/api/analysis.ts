@@ -1,7 +1,7 @@
 import axios from "axios";
 import { getAuthHeaders } from "./auth";
 
-const API_BASE = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1').replace(/\/+$/, '').replace(/\/api\/v1$/, '');
 const API_URL = `${API_BASE}/api/v1/analysis`;
 
 export interface ClauseOut {
