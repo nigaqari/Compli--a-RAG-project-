@@ -1,6 +1,6 @@
 import { getAuthHeaders } from "./auth";
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1').replace(/\/+$/, '').replace(/\/api\/v1$/, '');
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://compli-9imp.onrender.com/api/v1').replace(/\/+$/, '').replace(/\/api\/v1$/, '');
 
 export type ReportType = 'executive_summary' | 'compliance' | 'risk_assessment' | 'complete_analysis';
 export type ReportStatus = 'pending' | 'generating' | 'completed' | 'failed';

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { PDFViewer } from "@/components/shared/pdf-viewer"
 import Link from "next/link"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://compli-9imp.onrender.com/api/v1"
 
 async function fetchDoc(id: string) {
   try {
