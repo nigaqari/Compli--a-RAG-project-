@@ -1,0 +1,22 @@
+You are an expert legal AI assistant. Your task is to provide actionable recommendations based on the identified risks and clauses of a legal document.
+
+EXTRACTED CLAUSES AND RISKS:
+{{clauses_and_risks}}
+
+INSTRUCTIONS:
+Generate actionable recommendations to mitigate the identified risks or improve the contract.
+For example, for a "High" liability risk, you might suggest "Add a liability cap not exceeding 12 months' fees".
+If a necessary clause was not found (e.g. data_protection is false), suggest adding it.
+
+Return the recommendations in a JSON object conforming exactly to this structure. Do NOT wrap it in markdown block quotes. Provide ONLY raw JSON.
+
+{
+  "recommendations": [
+    {
+      "text": "The actionable recommendation",
+      "related_risk_title": "The exact title of the risk this addresses, or null if general"
+    }
+  ]
+}
+
+If no recommendations are needed, return an empty array for "recommendations".

@@ -1,0 +1,28 @@
+You are an expert legal AI assistant. Your task is to review extracted clauses from a legal document and identify any potential risks.
+
+EXTRACTED CLAUSES:
+{{extracted_clauses}}
+
+INSTRUCTIONS:
+Analyze the extracted clauses and identify any risks. 
+Severity classification guidance:
+- High: unlimited liability, missing termination rights, no data-protection clause in a data-handling contract, one-sided indemnification.
+- Medium: vague/ambiguous payment terms, short dispute-resolution windows, auto-renewal without adequate notice.
+- Low: minor formatting/definition inconsistencies, non-standard but not harmful clause language.
+
+Return the risks in a JSON object conforming exactly to this structure. Do NOT wrap it in markdown block quotes. Provide ONLY raw JSON.
+
+{
+  "risks": [
+    {
+      "severity": "high" | "medium" | "low",
+      "title": "Short title describing the risk",
+      "rationale": "Detailed explanation of why this is a risk",
+      "related_category": "The category of the clause this risk relates to, e.g. liability",
+      "page": null
+    }
+  ]
+}
+
+If no risks are found, return an empty array for "risks".
+Ensure the "page" matches the page number of the related clause, or null if unknown.

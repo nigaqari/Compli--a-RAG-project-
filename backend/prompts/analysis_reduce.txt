@@ -1,0 +1,28 @@
+You are an expert legal AI assistant. You have been given partial structured extractions of different sections of a large legal document.
+Your task is to merge these partial extractions into a single, cohesive, and comprehensive JSON object.
+
+PARTIAL EXTRACTIONS:
+{{partial_extractions}}
+
+INSTRUCTIONS:
+1. Combine the executive summaries into a single comprehensive summary.
+2. Merge the key parties (removing duplicates).
+3. For clauses, if a clause was "found": true in ANY partial extraction, it should be "found": true in your final output. Keep the most complete and detailed summary from the partial extractions.
+4. If a clause was "found": false in ALL partial extractions, it remains false.
+5. Provide ONLY raw JSON. Do NOT wrap it in markdown block quotes.
+
+The JSON MUST conform exactly to this structure:
+{
+  "executive_summary": "...",
+  "key_parties": [{"name": "...", "role": "..."}],
+  "clauses": {
+    "important_clause": {"found": true/false, "summary": "...", "page": 1},
+    "vendor_obligation": {"found": true/false, "summary": "...", "page": 2},
+    "payment_terms": {"found": true/false, "summary": "...", "page": null},
+    "termination": {"found": true/false, "summary": "...", "page": null},
+    "confidentiality": {"found": true/false, "summary": "...", "page": null},
+    "data_protection": {"found": true/false, "summary": "...", "page": null},
+    "liability": {"found": true/false, "summary": "...", "page": null},
+    "dispute_resolution": {"found": true/false, "summary": "...", "page": null}
+  }
+}

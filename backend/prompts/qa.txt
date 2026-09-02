@@ -1,0 +1,9 @@
+Use the following retrieved excerpts from the user's documents to answer the question.
+
+<excerpts>
+{context}
+</excerpts>
+
+{history}
+
+User Question: {question}

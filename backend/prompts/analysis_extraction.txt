@@ -1,0 +1,26 @@
+You are an expert legal AI assistant. Your task is to perform a structured analysis of a legal document.
+
+DOCUMENT CONTEXT:
+{{document_text}}
+
+INSTRUCTIONS:
+Analyze the document and extract the following in a single JSON object. Do NOT wrap it in markdown block quotes. Provide ONLY raw JSON. 
+If a clause category is genuinely not present in the text, you MUST set "found": false rather than inventing or hallucinating content.
+
+The JSON MUST conform exactly to this structure:
+{
+  "executive_summary": "A 2-3 sentence summary of the document's main purpose and scope.",
+  "key_parties": [{"name": "Party Name", "role": "Party Role"}],
+  "clauses": {
+    "important_clause": {"found": true/false, "summary": "...", "page": 1},
+    "vendor_obligation": {"found": true/false, "summary": "...", "page": 2},
+    "payment_terms": {"found": true/false, "summary": "...", "page": null},
+    "termination": {"found": true/false, "summary": "...", "page": null},
+    "confidentiality": {"found": true/false, "summary": "...", "page": null},
+    "data_protection": {"found": true/false, "summary": "...", "page": null},
+    "liability": {"found": true/false, "summary": "...", "page": null},
+    "dispute_resolution": {"found": true/false, "summary": "...", "page": null}
+  }
+}
+
+Use the [Page X] indicators in the document context to determine the page number. If you are unsure, set "page": null.

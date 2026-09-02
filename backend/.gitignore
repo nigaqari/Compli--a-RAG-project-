@@ -1,0 +1,34 @@
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments & Virtual Envs
+.venv/
+venv/
+ENV/
+env/
+
+# Environment Configuration (CRITICAL: NEVER COMMIT SECRETS)
+.env
+.env.*
+!.env.example
+
+# Database & SQLite files
+*.db
+*.sqlite
+*.sqlite3
+compli.db
+
+# File Storage & Uploads
+storage/
+storage/documents/
+storage/policies/
+storage/reports/
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+*.log
