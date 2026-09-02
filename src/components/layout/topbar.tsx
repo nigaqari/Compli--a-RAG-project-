@@ -1,17 +1,18 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import {
   Search, Bell, FileText, BookMarked, AlertTriangle,
   Scale, FileBarChart, Loader2, ArrowRight, CheckCircle,
-  Settings, LogOut, User as UserIcon
+  Settings, LogOut, User as UserIcon, Menu
 } from "lucide-react"
 import { ThemeToggle } from "./theme-toggle"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import {
   CommandDialog, CommandInput, CommandList, CommandEmpty,
   CommandGroup, CommandItem
@@ -19,6 +20,8 @@ import {
 import { searchApi, GlobalSearchResults } from "@/lib/api/search"
 import { authApi, User } from "@/lib/api/auth"
 import { reportsApi, ReportItem } from "@/lib/api/reports"
+import Link from "next/link"
+import Image from "next/image"
 
 const routeMap: Record<string, string> = {
   "dashboard": "Dashboard",
@@ -33,12 +36,26 @@ const routeMap: Record<string, string> = {
   "settings": "Settings",
 }
 
+const mobileNavLinks = [
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/documents", label: "Document Library" },
+  { href: "/policies", label: "Policy Library" },
+  { href: "/upload", label: "Upload" },
+  { href: "/chat", label: "Juris AI Chat" },
+  { href: "/analysis", label: "Document Analysis" },
+  { href: "/compliance", label: "Compliance Center" },
+  { href: "/risk", label: "Risk Center" },
+  { href: "/reports", label: "Reports" },
+  { href: "/settings", label: "Settings" },
+]
+
 export function Topbar() {
   const pathname = usePathname()
   const router = useRouter()
   const segments = pathname.split('/').filter(Boolean)
 
   const [open, setOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<GlobalSearchResults>({
     documents: [],
@@ -120,11 +137,45 @@ export function Topbar() {
 
   return (
     <header
-      className="flex h-16 shrink-0 items-center gap-4 px-6 w-full lg:ml-0 ml-10"
+      className="flex h-16 shrink-0 items-center justify-between gap-2 px-3 sm:px-6 w-full max-w-full"
       style={{ borderBottom: '1px solid var(--border)', backgroundColor: 'var(--background)' }}
     >
-      <div className="flex-1 overflow-hidden">
-        <Breadcrumb className="hidden md:flex">
+      {/* Left section: Mobile Hamburger Trigger + Breadcrumbs */}
+      <div className="flex items-center gap-2 min-w-0">
+        {/* Mobile Navigation Drawer */}
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          <SheetTrigger className="lg:hidden inline-flex shrink-0 items-center justify-center rounded-lg h-9 w-9 text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]">
+            <Menu className="h-5 w-5" />
+          </SheetTrigger>
+          <SheetContent side="left" className="p-4 w-[280px]" style={{ backgroundColor: 'var(--sidebar-bg)' }}>
+            <div className="flex items-center gap-2 mb-6 border-b border-[var(--border)] pb-4">
+              <Image src="/logo_compli.jpg" alt="Compli Logo" width={32} height={32} className="rounded-md shrink-0" />
+              <span className="font-bold text-lg text-[var(--sidebar-text-active)]">Compli Navigation</span>
+            </div>
+            <nav className="space-y-1">
+              {mobileNavLinks.map((link) => {
+                const active = pathname === link.href || pathname.startsWith(link.href + "/")
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      active
+                        ? "bg-[var(--sidebar-item-active)] text-[var(--brand-red)] font-bold"
+                        : "text-[var(--sidebar-text)] hover:bg-[var(--sidebar-item-hover)]"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                )
+              })}
+            </nav>
+          </SheetContent>
+        </Sheet>
+
+        {/* Page Breadcrumbs */}
+        <Breadcrumb className="hidden sm:flex min-w-0">
           <BreadcrumbList>
             {segments.map((segment, index) => {
               const isLast = index === segments.length - 1
@@ -134,11 +185,10 @@ export function Topbar() {
                   <BreadcrumbItem>
                     {isLast ? (
                       <div className="flex flex-col">
-                        <BreadcrumbPage className="capitalize font-bold text-[18px]" style={{ color: 'var(--text-primary)' }}>{name}</BreadcrumbPage>
-                        {segment === "dashboard" && <span className="text-[12px] mt-0.5 font-medium" style={{ color: 'var(--text-secondary)' }}>Legal & Compliance Overview</span>}
+                        <BreadcrumbPage className="capitalize font-bold text-base sm:text-[18px] truncate" style={{ color: 'var(--text-primary)' }}>{name}</BreadcrumbPage>
                       </div>
                     ) : (
-                      <BreadcrumbLink href={`/${segments.slice(0, index + 1).join('/')}`} className="capitalize text-[16px] font-medium transition-colors" style={{ color: 'var(--text-secondary)' }}>
+                      <BreadcrumbLink href={`/${segments.slice(0, index + 1).join('/')}`} className="capitalize text-sm font-medium transition-colors truncate" style={{ color: 'var(--text-secondary)' }}>
                         {name}
                       </BreadcrumbLink>
                     )}
@@ -149,19 +199,26 @@ export function Topbar() {
             })}
           </BreadcrumbList>
         </Breadcrumb>
+        
+        {/* Mobile Page Title */}
+        <span className="sm:hidden font-bold text-base text-[var(--text-primary)] truncate">
+          {routeMap[segments[0]] || "Compli"}
+        </span>
       </div>
 
-      <div className="flex items-center gap-3 ml-auto shrink-0">
+      {/* Right section: Search bar + Theme toggle + Notifications + User Avatar */}
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
         {/* Global Search Trigger */}
         <button
           onClick={() => setOpen(true)}
-          className="relative flex items-center justify-between w-[240px] md:w-[280px] h-10 px-3 text-sm rounded-lg border bg-[var(--surface)] hover:bg-[var(--surface-hover)] border-[var(--border)] text-[var(--text-secondary)] transition-colors cursor-pointer"
+          className="relative flex items-center justify-between w-9 sm:w-[220px] md:w-[260px] h-9 sm:h-10 px-2.5 text-sm rounded-lg border bg-[var(--surface)] hover:bg-[var(--surface-hover)] border-[var(--border)] text-[var(--text-secondary)] transition-colors cursor-pointer"
+          title="Search contracts, risks..."
         >
           <div className="flex items-center gap-2">
-            <Search className="h-4 w-4" />
-            <span>Search contracts, risks...</span>
+            <Search className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline text-xs sm:text-sm truncate">Search contracts, risks...</span>
           </div>
-          <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100">
+          <kbd className="hidden md:inline-flex h-5 items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100">
             <span className="text-xs">⌘</span>K
           </kbd>
         </button>
@@ -170,7 +227,7 @@ export function Topbar() {
 
         {/* Notifications Dropdown */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="relative h-9 w-9 inline-flex items-center justify-center rounded-lg transition-colors hover:bg-[var(--surface-hover)] cursor-pointer outline-none">
+          <DropdownMenuTrigger className="relative h-9 w-9 inline-flex items-center justify-center rounded-lg transition-colors hover:bg-[var(--surface-hover)] cursor-pointer outline-none shrink-0">
             <Bell className="h-[1.1rem] w-[1.1rem]" style={{ color: 'var(--text-secondary)' }} />
             {recentReports.length > 0 && (
               <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center rounded-full p-0 text-[10px] text-white" style={{ backgroundColor: 'var(--brand-red)' }}>
@@ -178,7 +235,7 @@ export function Topbar() {
               </Badge>
             )}
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+          <DropdownMenuContent align="end" className="w-72 sm:w-80" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
             <DropdownMenuLabel className="flex items-center justify-between" style={{ color: 'var(--text-primary)' }}>
               <span>Recent Activity</span>
               <span className="text-xs font-normal text-muted-foreground">{recentReports.length} events</span>
@@ -217,7 +274,7 @@ export function Topbar() {
 
         {/* Profile Dropdown */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="rounded-full inline-flex items-center justify-center hover:ring-2 hover:ring-[var(--brand-red)] transition-all cursor-pointer outline-none">
+          <DropdownMenuTrigger className="rounded-full inline-flex items-center justify-center hover:ring-2 hover:ring-[var(--brand-red)] transition-all cursor-pointer outline-none shrink-0">
             <Avatar className="h-8 w-8">
               <AvatarFallback className="text-xs font-semibold text-white" style={{ backgroundColor: 'var(--brand-red)' }}>
                 {getUserInitials()}
@@ -228,22 +285,22 @@ export function Topbar() {
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
-                  {user?.full_name || "Jane Doe"}
+                  {user?.full_name || "User Account"}
                 </p>
                 <p className="text-xs text-muted-foreground truncate">
-                  {user?.email || "jane.doe@example.com"}
+                  {user?.email || "user@example.com"}
                 </p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem 
-              className="cursor-pointer flex items-center gap-2"
+              className="cursor-pointer flex items-center gap-2 text-xs sm:text-sm"
               onClick={() => router.push('/settings')}
             >
               <UserIcon className="h-4 w-4" /> Profile Details
             </DropdownMenuItem>
             <DropdownMenuItem 
-              className="cursor-pointer flex items-center gap-2"
+              className="cursor-pointer flex items-center gap-2 text-xs sm:text-sm"
               onClick={() => router.push('/settings')}
             >
               <Settings className="h-4 w-4" /> Account Settings
@@ -251,7 +308,7 @@ export function Topbar() {
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               style={{ color: 'var(--brand-red)' }}
-              className="cursor-pointer font-medium flex items-center gap-2"
+              className="cursor-pointer font-medium flex items-center gap-2 text-xs sm:text-sm"
               onClick={() => authApi.logout()}
             >
               <LogOut className="h-4 w-4" /> Log out

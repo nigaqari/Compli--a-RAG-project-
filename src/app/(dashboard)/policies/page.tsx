@@ -79,7 +79,7 @@ export default function PolicyLibraryPage() {
   }
 
   return (
-    <div>
+    <div className="w-full max-w-full overflow-x-hidden">
       <PageHeader
         title="Policy Library"
         description="Manage your organization's compliance policies and version history."
@@ -103,13 +103,13 @@ export default function PolicyLibraryPage() {
       {loading ? (
         <div className="flex flex-col items-center justify-center h-[40vh]">
           <Loader2 className="h-8 w-8 animate-spin text-[var(--brand-red)] mb-4" />
-          <p className="text-[var(--text-secondary)]">Loading policies...</p>
+          <p className="text-[var(--text-secondary)] text-sm">Loading policies...</p>
         </div>
       ) : policies.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-[40vh] border border-dashed rounded-xl text-center p-8">
-          <ShieldCheck className="h-12 w-12 mb-4 text-[var(--text-secondary)] opacity-40" />
-          <h3 className="text-lg font-semibold mb-1">No policies yet</h3>
-          <p className="text-sm text-[var(--text-secondary)] mb-4">Upload your first policy to start running compliance checks.</p>
+        <div className="flex flex-col items-center justify-center h-[40vh] border border-dashed rounded-xl text-center p-6 sm:p-8">
+          <ShieldCheck className="h-10 sm:h-12 w-10 sm:w-12 mb-3 sm:mb-4 text-[var(--text-secondary)] opacity-40" />
+          <h3 className="text-base sm:text-lg font-semibold mb-1">No policies yet</h3>
+          <p className="text-xs sm:text-sm text-[var(--text-secondary)] mb-4">Upload your first policy to start running compliance checks.</p>
           <Button 
             className="bg-[var(--brand-red)] hover:bg-[var(--brand-red)]/90 text-white"
             onClick={() => setUploadDialogOpen(true)}
@@ -118,65 +118,67 @@ export default function PolicyLibraryPage() {
           </Button>
         </div>
       ) : (
-        <div className="border rounded-xl bg-[var(--surface)] overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Version</TableHead>
-                <TableHead>Uploaded</TableHead>
-                <TableHead className="text-right">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {policies.map(policy => (
-                <TableRow key={policy.id} className="hover:bg-[var(--surface-hover)] transition-colors">
-                  <TableCell className="font-semibold">
-                    <Link
-                      href={`/policies/${policy.id}`}
-                      className="hover:text-[var(--brand-red)] transition-colors"
-                    >
-                      {policy.name}
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={categoryColors[policy.category] ?? ""}
-                    >
-                      {policy.category.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-xs font-mono bg-[var(--surface-hover)] border border-border px-2 py-0.5 rounded-full">
-                      v{policy.current_version}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-[var(--text-secondary)] text-sm">
-                    {new Date(policy.created_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Link
-                      href={`/policies/${policy.id}`}
-                      className={buttonVariants({ variant: "ghost", size: "sm" })}
-                    >
-                      View
-                    </Link>
-                  </TableCell>
+        <div className="border rounded-xl bg-[var(--surface)] overflow-hidden w-full">
+          <div className="w-full overflow-x-auto">
+            <Table className="w-full min-w-[550px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Version</TableHead>
+                  <TableHead>Uploaded</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {policies.map(policy => (
+                  <TableRow key={policy.id} className="hover:bg-[var(--surface-hover)] transition-colors">
+                    <TableCell className="font-semibold">
+                      <Link
+                        href={`/policies/${policy.id}`}
+                        className="hover:text-[var(--brand-red)] transition-colors truncate max-w-[200px] block"
+                      >
+                        {policy.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={`capitalize text-xs ${categoryColors[policy.category] ?? ""}`}
+                      >
+                        {policy.category.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-xs font-mono bg-[var(--surface-hover)] border border-border px-2 py-0.5 rounded-full">
+                        v{policy.current_version}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-[var(--text-secondary)] text-xs sm:text-sm">
+                      {new Date(policy.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Link
+                        href={`/policies/${policy.id}`}
+                        className={buttonVariants({ variant: "ghost", size: "sm" })}
+                      >
+                        View
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
 
       {/* Upload Policy Dialog */}
       <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg w-[95vw] max-w-[95vw] sm:w-full">
           <DialogHeader>
             <DialogTitle>Upload Compliance Policy</DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xs sm:text-sm">
               Upload a standard policy PDF (e.g. GDPR, Vendor Risk, Security Standards) to compare contracts against.
             </DialogDescription>
           </DialogHeader>
@@ -184,7 +186,7 @@ export default function PolicyLibraryPage() {
           <form onSubmit={handleUploadPolicy} className="space-y-4 pt-2">
             {/* Drop Zone */}
             <div
-              className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer hover:border-[var(--brand-red)]/50 transition-colors bg-[var(--surface-hover)]/40"
+              className="border-2 border-dashed rounded-xl p-4 sm:p-6 text-center cursor-pointer hover:border-[var(--brand-red)]/50 transition-colors bg-[var(--surface-hover)]/40"
               onClick={() => fileInputRef.current?.click()}
             >
               <input
@@ -195,37 +197,38 @@ export default function PolicyLibraryPage() {
                 onChange={e => handleFileChange(e.target.files?.[0] || null)}
               />
               {policyFile ? (
-                <div className="flex flex-col items-center gap-1.5 text-sm">
-                  <CheckCircle className="h-8 w-8 text-emerald-500" />
-                  <p className="font-semibold">{policyFile.name}</p>
+                <div className="flex flex-col items-center gap-1.5 text-xs sm:text-sm">
+                  <CheckCircle className="h-7 sm:h-8 w-7 sm:w-8 text-emerald-500" />
+                  <p className="font-semibold truncate max-w-full">{policyFile.name}</p>
                   <p className="text-xs text-muted-foreground">{(policyFile.size / 1024 / 1024).toFixed(2)} MB · Click to replace</p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-1.5 text-muted-foreground">
-                  <FileText className="h-8 w-8 opacity-50" />
-                  <p className="font-medium text-sm">Click to select PDF or drag & drop</p>
-                  <p className="text-xs">Max 25MB · PDF only</p>
+                  <FileText className="h-7 sm:h-8 w-7 sm:w-8 opacity-50" />
+                  <p className="font-medium text-xs sm:text-sm">Click to select PDF or drag & drop</p>
+                  <p className="text-[11px] sm:text-xs">Max 25MB · PDF only</p>
                 </div>
               )}
             </div>
 
             {/* Policy Name */}
             <div className="space-y-1.5">
-              <Label htmlFor="policy-name">Policy Name</Label>
+              <Label htmlFor="policy-name" className="text-xs sm:text-sm">Policy Name</Label>
               <Input
                 id="policy-name"
                 placeholder="e.g. Global Data Privacy Standard 2026"
                 value={policyName}
                 onChange={e => setPolicyName(e.target.value)}
                 required
+                className="text-xs sm:text-sm"
               />
             </div>
 
             {/* Policy Category */}
             <div className="space-y-1.5">
-              <Label htmlFor="policy-category">Category</Label>
+              <Label htmlFor="policy-category" className="text-xs sm:text-sm">Category</Label>
               <Select value={category} onValueChange={(val) => setCategory(val || 'data_privacy')}>
-                <SelectTrigger id="policy-category">
+                <SelectTrigger id="policy-category" className="text-xs sm:text-sm">
                   <SelectValue placeholder="Select Category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -238,19 +241,19 @@ export default function PolicyLibraryPage() {
             </div>
 
             {uploadError && (
-              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-center gap-2">
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-xs sm:text-sm flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{uploadError}</span>
               </div>
             )}
 
-            <DialogFooter className="pt-2">
-              <Button type="button" variant="outline" onClick={() => setUploadDialogOpen(false)} disabled={uploading}>
+            <DialogFooter className="flex-col-reverse sm:flex-row gap-2 sm:gap-0 pt-2">
+              <Button type="button" variant="outline" onClick={() => setUploadDialogOpen(false)} disabled={uploading} className="w-full sm:w-auto">
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="bg-[var(--brand-red)] hover:bg-[var(--brand-red)]/90 text-white"
+                className="bg-[var(--brand-red)] hover:bg-[var(--brand-red)]/90 text-white w-full sm:w-auto"
                 disabled={!policyFile || !policyName.trim() || uploading}
               >
                 {uploading ? (

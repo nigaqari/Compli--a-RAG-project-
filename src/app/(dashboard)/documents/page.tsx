@@ -53,7 +53,7 @@ export default function DocumentLibraryPage() {
   }
 
   return (
-    <div>
+    <div className="w-full max-w-full overflow-x-hidden">
       <PageHeader 
         title="Document Library" 
         description="Manage, view, and analyze all your contracts and uploaded documents."
@@ -68,90 +68,93 @@ export default function DocumentLibraryPage() {
       {loading ? (
         <div className="flex flex-col items-center justify-center h-[40vh]">
           <Loader2 className="h-8 w-8 animate-spin text-[var(--brand-red)] mb-4" />
-          <p className="text-muted-foreground">Loading documents...</p>
+          <p className="text-muted-foreground text-sm">Loading documents...</p>
         </div>
       ) : documents.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-[40vh] border border-dashed rounded-xl text-center p-8">
-          <FolderOpen className="h-12 w-12 text-muted-foreground opacity-40 mb-4" />
-          <h3 className="text-lg font-semibold mb-1">No documents uploaded yet</h3>
-          <p className="text-sm text-muted-foreground mb-4">Upload contracts or agreements to get started.</p>
+        <div className="flex flex-col items-center justify-center h-[40vh] border border-dashed rounded-xl text-center p-6 sm:p-8">
+          <FolderOpen className="h-10 sm:h-12 w-10 sm:w-12 text-muted-foreground opacity-40 mb-3 sm:mb-4" />
+          <h3 className="text-base sm:text-lg font-semibold mb-1">No documents uploaded yet</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground mb-4">Upload contracts or agreements to get started.</p>
           <Link href="/upload" className={buttonVariants()}>Upload Document</Link>
         </div>
       ) : (
-        <div className="border rounded-xl bg-[var(--surface)] overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Upload Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {documents.map((doc) => (
-                <TableRow key={doc.id} className="hover:bg-[var(--surface-hover)] transition-colors">
-                  <TableCell className="font-semibold">
-                    <Link href={`/documents/${doc.id}`} className="flex items-center gap-2 hover:text-[var(--brand-red)] transition-colors">
-                      <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="truncate max-w-[280px]">{doc.original_name || doc.filename}</span>
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="capitalize">
-                      {doc.document_type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
-                    {new Date(doc.uploaded_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={doc.status || "completed"} />
-                  </TableCell>
-                  <TableCell className="text-right space-x-1.5">
-                    <Link href={`/analysis/${doc.id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
-                      <Sparkles className="h-3.5 w-3.5 mr-1 text-[var(--brand-red)]" /> Analyze
-                    </Link>
-                    <Link href={`/documents/${doc.id}`} className={buttonVariants({ variant: "ghost", size: "sm" })}>
-                      View
-                    </Link>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDeleteDoc(doc)}
-                      className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-8 px-2"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+        <div className="border rounded-xl bg-[var(--surface)] overflow-hidden w-full">
+          <div className="w-full overflow-x-auto">
+            <Table className="w-full min-w-[600px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Upload Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {documents.map((doc) => (
+                  <TableRow key={doc.id} className="hover:bg-[var(--surface-hover)] transition-colors">
+                    <TableCell className="font-semibold">
+                      <Link href={`/documents/${doc.id}`} className="flex items-center gap-2 hover:text-[var(--brand-red)] transition-colors min-w-0">
+                        <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="truncate max-w-[180px] sm:max-w-[280px]">{doc.original_name || doc.filename}</span>
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="capitalize text-xs">
+                        {doc.document_type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-xs sm:text-sm">
+                      {new Date(doc.uploaded_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={doc.status || "completed"} />
+                    </TableCell>
+                    <TableCell className="text-right space-x-1 sm:space-x-1.5 whitespace-nowrap">
+                      <Link href={`/analysis/${doc.id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>
+                        <Sparkles className="h-3.5 w-3.5 mr-1 text-[var(--brand-red)]" /> Analyze
+                      </Link>
+                      <Link href={`/documents/${doc.id}`} className={buttonVariants({ variant: "ghost", size: "sm" })}>
+                        View
+                      </Link>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDeleteDoc(doc)}
+                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-8 px-2"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!deleteDoc} onOpenChange={(open) => !open && setDeleteDoc(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md w-[95vw] max-w-[95vw] sm:w-full">
           <DialogHeader>
             <div className="flex items-center gap-2 text-destructive mb-1">
-              <AlertTriangle className="h-5 w-5" />
+              <AlertTriangle className="h-5 w-5 shrink-0" />
               <DialogTitle>Delete Document</DialogTitle>
             </div>
-            <DialogDescription>
+            <DialogDescription className="text-xs sm:text-sm">
               Are you sure you want to delete <strong className="text-foreground">{deleteDoc?.original_name || deleteDoc?.filename}</strong>? This will permanently remove all extracted chunks, analyses, compliance records, and generated reports.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setDeleteDoc(null)} disabled={deleting}>
+          <DialogFooter className="flex-col-reverse sm:flex-row gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setDeleteDoc(null)} disabled={deleting} className="w-full sm:w-auto">
               Cancel
             </Button>
             <Button
               variant="destructive"
               onClick={handleDeleteConfirm}
               disabled={deleting}
+              className="w-full sm:w-auto"
             >
               {deleting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Deleting...</> : "Delete Permanently"}
             </Button>
