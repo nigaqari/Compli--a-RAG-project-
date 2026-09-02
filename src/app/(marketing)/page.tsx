@@ -25,7 +25,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-24 pb-16 md:pt-32 md:pb-24">
+      <section className="relative overflow-hidden pt-12 sm:pt-20 pb-12 md:pt-32 md:pb-24">
         <motion.div 
           className="container mx-auto px-4 text-center"
           initial="hidden"
@@ -33,10 +33,10 @@ export default function Home() {
           viewport={{ once: true }}
           variants={staggerContainer}
         >
-          <motion.h1 variants={fadeIn} className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 max-w-4xl mx-auto">
+          <motion.h1 variants={fadeIn} className="text-2xl sm:text-4xl md:text-6xl font-extrabold tracking-tight mb-4 sm:mb-6 max-w-4xl mx-auto leading-tight">
             Review contracts against your policies in minutes, not days.
           </motion.h1>
-          <motion.p variants={fadeIn} className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
+          <motion.p variants={fadeIn} className="text-base sm:text-xl text-muted-foreground mb-8 sm:mb-10 max-w-2xl mx-auto">
             Compli uses advanced AI to compare your documents against your organization's specific policies, instantly surfacing risks and compliance gaps.
           </motion.p>
           <motion.div variants={fadeIn} className="flex flex-col sm:flex-row items-center justify-center gap-4">
