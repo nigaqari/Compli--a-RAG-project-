@@ -1,15 +1,15 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 from app.models.user import UserRole
 
 class SignupRequest(BaseModel):
     full_name: str
-    email: EmailStr
+    email: str
     password: str
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 class LoginResponse(BaseModel):
