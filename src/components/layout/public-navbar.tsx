@@ -21,9 +21,9 @@ export function PublicNavbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4 flex h-16 sm:h-20 items-center justify-between">
+      <div className="container mx-auto px-4 flex h-16 sm:h-20 items-center justify-between relative">
         {/* Logo */}
-        <Link href="/" className="flex items-center space-x-2.5 sm:space-x-3 shrink-0">
+        <Link href="/" className="flex items-center space-x-2.5 sm:space-x-3 shrink-0 z-10">
           <Image 
             src="/logo.jpg" 
             alt="Compli Logo" 
@@ -36,8 +36,8 @@ export function PublicNavbar() {
           </span>
         </Link>
 
-        {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-8">
+        {/* Desktop Navigation Links - Perfectly Centered */}
+        <nav className="hidden md:flex items-center gap-8 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -52,7 +52,7 @@ export function PublicNavbar() {
         </nav>
 
         {/* Desktop Action Buttons */}
-        <div className="hidden md:flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-4 z-10">
           <ThemeToggle />
           <Link href="/login">
             <Button variant="ghost" className="text-base font-medium">
