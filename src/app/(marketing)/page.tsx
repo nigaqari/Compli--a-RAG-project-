@@ -33,21 +33,21 @@ export default function Home() {
           viewport={{ once: true }}
           variants={staggerContainer}
         >
-          <motion.h1 variants={fadeIn} className="text-2xl sm:text-4xl md:text-6xl font-extrabold tracking-tight mb-4 sm:mb-6 max-w-4xl mx-auto leading-tight">
+          <motion.h1 variants={fadeIn} className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-5 max-w-2xl sm:max-w-4xl mx-auto leading-[1.15] text-white">
             Review contracts against your policies in minutes, not days.
           </motion.h1>
-          <motion.p variants={fadeIn} className="text-base sm:text-xl text-muted-foreground mb-8 sm:mb-10 max-w-2xl mx-auto">
-            Compli uses advanced AI to compare your documents against your organization's specific policies, instantly surfacing risks and compliance gaps.
+          <motion.p variants={fadeIn} className="text-[15px] sm:text-lg text-slate-300/90 mb-8 sm:mb-10 max-w-md sm:max-w-xl mx-auto leading-relaxed">
+            Compli uses advanced AI to compare your documents against your organization&apos;s specific policies, instantly surfacing risks and compliance gaps.
           </motion.p>
-          <motion.div variants={fadeIn} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/signup">
-              <Button size="lg" className="w-full sm:w-auto text-lg px-8 h-14 transition-all hover:scale-105 hover:-translate-y-1 hover:shadow-lg" style={{ backgroundColor: "var(--brand-red, #dc2626)", color: "white" }}>
+          <motion.div variants={fadeIn} className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full">
+            <Link href="/signup" className="w-full sm:w-auto flex justify-center">
+              <Button size="lg" className="w-full max-w-[260px] sm:max-w-none sm:w-auto text-base font-semibold px-8 h-12 transition-all hover:scale-105 hover:shadow-lg shadow-md rounded-lg" style={{ backgroundColor: "var(--brand-red, #dc2626)", color: "white" }}>
                 Get Started Free
               </Button>
             </Link>
-            <Link href="/services">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-8 h-14 transition-all hover:scale-105 hover:-translate-y-1 hover:shadow-lg">
-                See how it works <ArrowRight className="ml-2 h-5 w-5" />
+            <Link href="/services" className="w-full sm:w-auto flex justify-center">
+              <Button size="lg" variant="outline" className="w-full max-w-[260px] sm:max-w-none sm:w-auto text-base font-medium px-8 h-12 border-white/20 bg-zinc-950/70 text-white hover:bg-zinc-900 hover:text-white rounded-lg shadow-sm transition-all hover:scale-105">
+                See how it works <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
           </motion.div>
