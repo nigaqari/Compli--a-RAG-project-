@@ -9,9 +9,21 @@ from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
 
+import os
+
 def load_prompt(filename: str) -> str:
-    with open(f"prompts/{filename}", "r", encoding="utf-8") as f:
-        return f.read()
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    possible_paths = [
+        os.path.join(base_dir, "prompts", filename),
+        os.path.join(os.getcwd(), "prompts", filename),
+        os.path.join(os.getcwd(), "backend", "prompts", filename),
+        os.path.join(os.getcwd(), "compli", "backend", "prompts", filename)
+    ]
+    for path in possible_paths:
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as f:
+                return f.read()
+    raise FileNotFoundError(f"Prompt {filename} not found")
 
 def _extract_single(db: Session, user_id: str, context: str) -> ExtractedPolicyRequirementsList:
     prompt_template = load_prompt("policy_requirement_extraction.txt")

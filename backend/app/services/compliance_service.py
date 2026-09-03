@@ -16,9 +16,21 @@ from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
 
+import os
+
 def load_prompt(filename: str) -> str:
-    with open(f"prompts/{filename}", "r", encoding="utf-8") as f:
-        return f.read()
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    possible_paths = [
+        os.path.join(base_dir, "prompts", filename),
+        os.path.join(os.getcwd(), "prompts", filename),
+        os.path.join(os.getcwd(), "backend", "prompts", filename),
+        os.path.join(os.getcwd(), "compli", "backend", "prompts", filename)
+    ]
+    for path in possible_paths:
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as f:
+                return f.read()
+    raise FileNotFoundError(f"Prompt {filename} not found")
 
 def run_comparison_task(db: Session, result_id: str, user_id: str):
     result = db.query(ComplianceResult).filter(ComplianceResult.id == result_id).first()

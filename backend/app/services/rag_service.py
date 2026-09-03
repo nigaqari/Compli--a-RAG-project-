@@ -1,4 +1,5 @@
 import re
+import os
 from typing import List, Dict, Any, Tuple
 from sqlalchemy.orm import Session
 from app.services.rag_retrieval import retrieve_context
@@ -7,8 +8,18 @@ from app.models.chat import ChatHistory
 from app.models.document import Document
 
 def _read_prompt_template(filename: str) -> str:
-    with open(f"prompts/{filename}", "r") as f:
-        return f.read()
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    possible_paths = [
+        os.path.join(base_dir, "prompts", filename),
+        os.path.join(os.getcwd(), "prompts", filename),
+        os.path.join(os.getcwd(), "backend", "prompts", filename),
+        os.path.join(os.getcwd(), "compli", "backend", "prompts", filename)
+    ]
+    for path in possible_paths:
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as f:
+                return f.read()
+    return "Synthesize answer for query based on context:\n{context}\n\nQuestion: {question}"
 
 def _format_context(chunks: List[Dict[str, Any]], db: Session) -> str:
     formatted = []
@@ -104,11 +115,14 @@ def answer_question(db: Session, question: str, user_id: str, conversation_id: s
     
     formatted_history = _format_history(history)
     
-    prompt = qa_template.format(
-        context=formatted_context,
-        history=formatted_history,
-        question=question
-    )
+    try:
+        prompt = qa_template.format(
+            context=formatted_context,
+            history=formatted_history,
+            question=question
+        )
+    except Exception:
+        prompt = f"Context:\n{formatted_context}\n\nQuestion: {question}"
     
     messages = [
         {"role": "system", "content": system_prompt},
@@ -116,7 +130,10 @@ def answer_question(db: Session, question: str, user_id: str, conversation_id: s
     ]
     
     # 5. Call LLM
-    raw_answer = generate_completion(db, user_id, messages)
+    try:
+        raw_answer = generate_completion(db, user_id, messages)
+    except Exception as e:
+        raw_answer = f"I retrieved your document context, but could not connect to Groq AI service ({str(e)}). Please ensure GROQ_API_KEY is configured in your Render environment settings."
     
     # 6. Extract citations
     cleaned_answer, citations = extract_citations(raw_answer, chunks, db)
