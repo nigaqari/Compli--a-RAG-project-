@@ -42,15 +42,15 @@ def _generate_completion_with_retry(client: Groq, messages: list, model: str, te
         kwargs["response_format"] = response_format
     return client.chat.completions.create(**kwargs)
 
-DEFAULT_MODEL = "llama-3.3-70b-versatile"
-DEEP_ANALYSIS_MODEL = "llama-3.3-70b-versatile"
+DEFAULT_MODEL = "openai/gpt-oss-20b"
+DEEP_ANALYSIS_MODEL = "openai/gpt-oss-120b"
 FALLBACK_MODELS = [
-    "llama-3.3-70b-versatile",
-    "llama-3.1-70b-versatile",
-    "llama3-70b-8192",
-    "llama-3.1-8b-instant",
-    "llama3-8b-8192",
-    "mixtral-8x7b-32768"
+    "openai/gpt-oss-20b",
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b",
+    "qwen/qwen3.6-27b",
+    "groq/compound-mini",
+    "groq/compound"
 ]
 
 def generate_completion(
